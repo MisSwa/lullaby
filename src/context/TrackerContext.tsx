@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { Baby } from '../types/baby';
-import { BabyLog, ActiveTrackers, SleepLog } from '../types/tracker';
+import { BabyLog, ActiveTrackers, SleepLog, FeedLog } from '../types/tracker';
 import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby } from '@services/db';
 
 interface TrackerContextType {
@@ -129,14 +129,83 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // --- Stubs (Phases 3–5) ---
+  // --- Breast Feed ---
 
-  const toggleBreastFeed = (_side: 'left' | 'right'): void => {
-    // Phase 3
+  const toggleBreastFeed = (side: 'left' | 'right'): void => {
+    const now = Date.now();
+    setActive(prev => {
+      const isLeft = side === 'left';
+      const myStart = isLeft ? prev.feedLeftStart : prev.feedRightStart;
+      const otherStart = isLeft ? prev.feedRightStart : prev.feedLeftStart;
+      const myElapsed = isLeft ? prev.feedLeftElapsed : prev.feedRightElapsed;
+      const otherElapsed = isLeft ? prev.feedRightElapsed : prev.feedLeftElapsed;
+
+      // Accumulate other side if it's currently running (auto-pause)
+      const newOtherElapsed =
+        otherStart !== null ? otherElapsed + Math.floor((now - otherStart) / 1000) : otherElapsed;
+
+      if (myStart !== null) {
+        // Pause my side
+        const newMyElapsed = myElapsed + Math.floor((now - myStart) / 1000);
+        return isLeft
+          ? {
+              ...prev,
+              feedLeftStart: null,
+              feedLeftElapsed: newMyElapsed,
+              feedRightStart: null,
+              feedRightElapsed: newOtherElapsed,
+            }
+          : {
+              ...prev,
+              feedRightStart: null,
+              feedRightElapsed: newMyElapsed,
+              feedLeftStart: null,
+              feedLeftElapsed: newOtherElapsed,
+            };
+      } else {
+        // Start my side, pause other side
+        return isLeft
+          ? { ...prev, feedLeftStart: now, feedRightStart: null, feedRightElapsed: newOtherElapsed }
+          : { ...prev, feedRightStart: now, feedLeftStart: null, feedLeftElapsed: newOtherElapsed };
+      }
+    });
   };
 
-  const saveBreastFeed = async (_notes?: string): Promise<void> => {
-    // Phase 3
+  const saveBreastFeed = async (notes = ''): Promise<void> => {
+    if (!activeBabyId) return;
+    const now = Date.now();
+    const finalLeft =
+      active.feedLeftElapsed +
+      (active.feedLeftStart !== null ? Math.floor((now - active.feedLeftStart) / 1000) : 0);
+    const finalRight =
+      active.feedRightElapsed +
+      (active.feedRightStart !== null ? Math.floor((now - active.feedRightStart) / 1000) : 0);
+    if (finalLeft === 0 && finalRight === 0) return;
+    const log: FeedLog = {
+      id: Crypto.randomUUID(),
+      babyId: activeBabyId,
+      type: 'feed',
+      feedType: 'breast',
+      timestamp: now,
+      leftDuration: finalLeft,
+      rightDuration: finalRight,
+      amountMl: 0,
+      notes,
+    };
+    try {
+      await insertLog(db, log);
+      setActive(prev => ({
+        ...prev,
+        feedLeftStart: null,
+        feedRightStart: null,
+        feedLeftElapsed: 0,
+        feedRightElapsed: 0,
+      }));
+      await refreshLogs();
+    } catch (error) {
+      console.error('Failed to save breast feed:', error);
+      throw error;
+    }
   };
 
   const logBottle = async (_amountMl: number, _notes?: string): Promise<void> => {

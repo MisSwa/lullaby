@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
 import { useLiveTick } from '@hooks/useLiveTick';
-import { BabyLog, SleepLog } from '../types/tracker';
+import { BabyLog, FeedLog, SleepLog } from '../types/tracker';
 import { DashboardHeader } from './DashboardHeader';
 import { AddBabyModal } from '@modals/AddBabyModal';
 import { NotesModal } from '@modals/NotesModal';
@@ -18,6 +18,12 @@ function formatElapsed(secs: number): string {
 
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatFeedElapsed(secs: number): string {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}m ${s}s`;
 }
 
 function colorForLog(log: BabyLog): string {
@@ -43,11 +49,21 @@ function labelForLog(log: BabyLog): string {
 }
 
 function durationForLog(log: BabyLog): string {
-  if (log.type !== 'sleep') return '';
-  const sleepLog = log as SleepLog;
-  if (!sleepLog.endTime) return 'In progress';
-  const secs = Math.floor((sleepLog.endTime - sleepLog.timestamp) / 1000);
-  return formatElapsed(secs);
+  if (log.type === 'sleep') {
+    const sleepLog = log as SleepLog;
+    if (!sleepLog.endTime) return 'In progress';
+    const secs = Math.floor((sleepLog.endTime - sleepLog.timestamp) / 1000);
+    return formatElapsed(secs);
+  }
+  if (log.type === 'feed') {
+    const feedLog = log as FeedLog;
+    if (feedLog.feedType !== 'breast') return '';
+    const parts: string[] = [];
+    if (feedLog.leftDuration > 0) parts.push(`L ${formatFeedElapsed(feedLog.leftDuration)}`);
+    if (feedLog.rightDuration > 0) parts.push(`R ${formatFeedElapsed(feedLog.rightDuration)}`);
+    return parts.join(' · ');
+  }
+  return '';
 }
 
 // ─── LogCard ────────────────────────────────────────────────────────────────
@@ -84,12 +100,28 @@ const LogCard: React.FC<LogCardProps> = ({ log, onDelete }) => {
 // ─── Dashboard ──────────────────────────────────────────────────────────────
 
 export const Dashboard: React.FC = () => {
-  const { logs, active, startSleep, stopSleep, removeLog } = useTracker();
+  const { logs, active, startSleep, stopSleep, removeLog, toggleBreastFeed, saveBreastFeed } =
+    useTracker();
   const [showAddBaby, setShowAddBaby] = useState(false);
   const [notesVisible, setNotesVisible] = useState(false);
+  const [feedNotesVisible, setFeedNotesVisible] = useState(false);
 
   const sleepElapsed = useLiveTick(active.sleepStart);
+  const leftTick = useLiveTick(active.feedLeftStart);
+  const rightTick = useLiveTick(active.feedRightStart);
+
   const isSleeping = active.sleepStart !== null;
+  const totalLeftSecs = active.feedLeftElapsed + leftTick;
+  const totalRightSecs = active.feedRightElapsed + rightTick;
+  const isFeedRunning = active.feedLeftStart !== null || active.feedRightStart !== null;
+  const showFeedSave = (totalLeftSecs > 0 || totalRightSecs > 0) && !isFeedRunning;
+
+  const feedModalElapsed = (() => {
+    const parts: string[] = [];
+    if (active.feedLeftElapsed > 0) parts.push(`L ${formatFeedElapsed(active.feedLeftElapsed)}`);
+    if (active.feedRightElapsed > 0) parts.push(`R ${formatFeedElapsed(active.feedRightElapsed)}`);
+    return parts.join(' · ') || '0m 0s';
+  })();
 
   const handleSleepPress = () => {
     if (isSleeping) {
@@ -102,6 +134,11 @@ export const Dashboard: React.FC = () => {
   const handleSaveNotes = async (notes: string): Promise<void> => {
     await stopSleep(notes);
     setNotesVisible(false);
+  };
+
+  const handleSaveFeedNotes = async (notes: string): Promise<void> => {
+    await saveBreastFeed(notes);
+    setFeedNotesVisible(false);
   };
 
   return (
@@ -118,6 +155,36 @@ export const Dashboard: React.FC = () => {
             {isSleeping ? `Wake Up  ·  ${formatElapsed(sleepElapsed)}` : 'Track Sleep'}
           </Text>
         </TouchableOpacity>
+
+        {/* Feed buttons */}
+        <View style={styles.feedRow}>
+          <TouchableOpacity
+            style={[styles.feedButton, active.feedLeftStart !== null && styles.feedButtonActive]}
+            onPress={() => toggleBreastFeed('left')}
+            disabled={isSleeping}
+          >
+            <Text style={styles.feedButtonSide}>L</Text>
+            <Text style={styles.feedButtonElapsed}>{formatFeedElapsed(totalLeftSecs)}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.feedButton, active.feedRightStart !== null && styles.feedButtonActive]}
+            onPress={() => toggleBreastFeed('right')}
+            disabled={isSleeping}
+          >
+            <Text style={styles.feedButtonSide}>R</Text>
+            <Text style={styles.feedButtonElapsed}>{formatFeedElapsed(totalRightSecs)}</Text>
+          </TouchableOpacity>
+
+          {showFeedSave && (
+            <TouchableOpacity
+              style={styles.feedSaveButton}
+              onPress={() => setFeedNotesVisible(true)}
+            >
+              <Text style={styles.feedSaveButtonText}>Save</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Log list */}
@@ -142,6 +209,13 @@ export const Dashboard: React.FC = () => {
         elapsed={formatElapsed(sleepElapsed)}
         onSave={handleSaveNotes}
         onDismiss={() => setNotesVisible(false)}
+      />
+      <NotesModal
+        visible={feedNotesVisible}
+        title="End Feed Session"
+        elapsed={feedModalElapsed}
+        onSave={handleSaveFeedNotes}
+        onDismiss={() => setFeedNotesVisible(false)}
       />
     </SafeAreaView>
   );
@@ -262,5 +336,55 @@ const styles = StyleSheet.create({
   deleteIcon: {
     fontSize: TYPOGRAPHY.size.base,
     color: COLORS.textMuted,
+  },
+  // Feed buttons
+  feedRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  feedButton: {
+    flex: 1,
+    height: 68,
+    borderRadius: 12,
+    backgroundColor: COLORS.feed,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  feedButtonActive: {
+    backgroundColor: COLORS.active,
+  },
+  feedButtonSide: {
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: 'bold',
+    color: COLORS.surface,
+  },
+  feedButtonElapsed: {
+    fontSize: TYPOGRAPHY.size.xs,
+    color: COLORS.surface,
+    marginTop: 2,
+  },
+  feedSaveButton: {
+    width: 70,
+    height: 68,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  feedSaveButtonText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: 'bold',
+    color: COLORS.surface,
   },
 });
