@@ -19,11 +19,11 @@ export default function App(): React.ReactElement {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <SQLiteProvider databaseName="lullaby_local.db" onInit={initializeDatabase}>
-        <TrackerProvider>
-          <SettingsProvider>
+        <SettingsProvider>
+          <TrackerProvider>
             <AppShell />
-          </SettingsProvider>
-        </TrackerProvider>
+          </TrackerProvider>
+        </SettingsProvider>
       </SQLiteProvider>
     </Suspense>
   );

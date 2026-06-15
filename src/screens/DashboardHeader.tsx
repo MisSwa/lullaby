@@ -6,9 +6,10 @@ import { COLORS, TYPOGRAPHY } from '@theme/colors';
 
 interface DashboardHeaderProps {
   onAddBaby: () => void;
+  onSettingsPress: () => void;
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onAddBaby }) => {
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onAddBaby, onSettingsPress }) => {
   const { babies, activeBabyId, setActiveBabyId } = useTracker();
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -29,13 +30,23 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onAddBaby }) =
     <View style={styles.header}>
       <Text style={styles.appName}>Lullaby</Text>
 
-      <TouchableOpacity
-        style={styles.switcher}
-        onPress={() => setDropdownVisible(true)}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Text style={styles.switcherText}>{activeName} ▾</Text>
-      </TouchableOpacity>
+      <View style={styles.rightControls}>
+        <TouchableOpacity
+          style={styles.switcher}
+          onPress={() => setDropdownVisible(true)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.switcherText}>{activeName} ▾</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.gearButton}
+          onPress={onSettingsPress}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.gearIcon}>⚙</Text>
+        </TouchableOpacity>
+      </View>
 
       <Modal
         transparent
@@ -83,6 +94,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
+  rightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   switcher: {
     minHeight: 44,
     justifyContent: 'center',
@@ -92,6 +108,16 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.sm,
     fontWeight: '600',
     color: COLORS.textPrimary,
+  },
+  gearButton: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  gearIcon: {
+    fontSize: TYPOGRAPHY.size.lg,
+    color: COLORS.textMuted,
   },
   backdrop: {
     flex: 1,
