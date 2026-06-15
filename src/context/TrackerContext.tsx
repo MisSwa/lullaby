@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
+import * as Crypto from 'expo-crypto';
 import { Baby } from '../types/baby';
-import { BabyLog, ActiveTrackers } from '../types/tracker';
-import { fetchBabies, fetchLogsForBaby, deleteLog, createBaby } from '@services/db';
+import { BabyLog, ActiveTrackers, SleepLog } from '../types/tracker';
+import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby } from '@services/db';
 
 interface TrackerContextType {
   babies: Baby[];
@@ -11,9 +12,9 @@ interface TrackerContextType {
   logs: BabyLog[];
   active: ActiveTrackers;
   refreshLogs: () => Promise<void>;
-  // Action stubs — implemented in later phases
   startSleep: () => void;
   stopSleep: (notes?: string) => Promise<void>;
+  // Stubs — implemented in later phases
   toggleBreastFeed: (side: 'left' | 'right') => void;
   saveBreastFeed: (notes?: string) => Promise<void>;
   logBottle: (amountMl: number, notes?: string) => Promise<void>;
@@ -45,8 +46,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [babies, setBabies] = useState<Baby[]>([]);
   const [activeBabyId, setActiveBabyId] = useState<string | null>(null);
   const [logs, setLogs] = useState<BabyLog[]>([]);
-  const [active] = useState<ActiveTrackers>(INITIAL_ACTIVE);
-  // Tracks whether we've auto-selected the first baby to avoid overriding user selection
+  const [active, setActive] = useState<ActiveTrackers>(INITIAL_ACTIVE);
   const hasSetInitialBaby = useRef(false);
 
   useEffect(() => {
@@ -103,37 +103,55 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // --- Stubs (implemented in Phase 2 onwards) ---
+  // --- Sleep ---
 
   const startSleep = (): void => {
-    // Implemented in Phase 2
+    setActive(prev => ({ ...prev, sleepStart: Date.now() }));
   };
 
-  const stopSleep = async (_notes?: string): Promise<void> => {
-    // Implemented in Phase 2
+  const stopSleep = async (notes = ''): Promise<void> => {
+    if (!active.sleepStart || !activeBabyId) return;
+    const log: SleepLog = {
+      id: Crypto.randomUUID(),
+      babyId: activeBabyId,
+      type: 'sleep',
+      timestamp: active.sleepStart,
+      endTime: Date.now(),
+      notes,
+    };
+    try {
+      await insertLog(db, log);
+      setActive(prev => ({ ...prev, sleepStart: null }));
+      await refreshLogs();
+    } catch (error) {
+      console.error('Failed to stop sleep:', error);
+      throw error;
+    }
   };
+
+  // --- Stubs (Phases 3–5) ---
 
   const toggleBreastFeed = (_side: 'left' | 'right'): void => {
-    // Implemented in Phase 3
+    // Phase 3
   };
 
   const saveBreastFeed = async (_notes?: string): Promise<void> => {
-    // Implemented in Phase 3
+    // Phase 3
   };
 
   const logBottle = async (_amountMl: number, _notes?: string): Promise<void> => {
-    // Implemented in Phase 4
+    // Phase 4
   };
 
   const logSolids = async (_notes?: string): Promise<void> => {
-    // Implemented in Phase 4
+    // Phase 4
   };
 
   const logDiaper = async (
     _status: 'wet' | 'dirty' | 'mixed' | 'dry',
     _notes?: string,
   ): Promise<void> => {
-    // Implemented in Phase 5
+    // Phase 5
   };
 
   return (
