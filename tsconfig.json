@@ -19,7 +19,8 @@
       "@context/*": ["src/context/*"],
       "@hooks/*": ["src/hooks/*"],
       "@screens/*": ["src/screens/*"],
-      "@modals/*": ["src/modals/*"]
+      "@modals/*": ["src/modals/*"],
+      "@components/*": ["src/components/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.d.ts", "expo-env.d.ts"]

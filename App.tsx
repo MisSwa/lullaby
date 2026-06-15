@@ -5,6 +5,7 @@ import { initializeDatabase } from '@services/db';
 import { TrackerProvider } from '@context/TrackerContext';
 import { SettingsProvider } from '@context/SettingsContext';
 import { AppShell } from '@screens/AppShell';
+import { BackupManager } from '@components/BackupManager';
 import { COLORS } from '@theme/colors';
 
 function LoadingFallback(): React.ReactElement {
@@ -21,6 +22,7 @@ export default function App(): React.ReactElement {
       <SQLiteProvider databaseName="lullaby_local.db" onInit={initializeDatabase}>
         <SettingsProvider>
           <TrackerProvider>
+            <BackupManager />
             <AppShell />
           </TrackerProvider>
         </SettingsProvider>

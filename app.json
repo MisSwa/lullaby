@@ -8,7 +8,11 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.lullaby.app"
+      "bundleIdentifier": "com.lullaby.app",
+      "entitlements": {
+        "com.apple.developer.icloud-services": ["CloudDocuments"],
+        "com.apple.developer.icloud-container-identifiers": ["iCloud.com.lullaby.app"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +28,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-file-system"
     ]
   }
 }
