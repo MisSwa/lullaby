@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: COLORS.overlay,
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     paddingTop: 72,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     minWidth: 180,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,

@@ -79,12 +79,12 @@ export async function writeBackupIOS(json: string): Promise<void> {
     await FileSystem.writeAsStringAsync(path, json, {
       encoding: FileSystem.EncodingType.UTF8,
     });
-    console.log('Backup written to:', path);
+    console.warn('Backup written to:', path);
 
     // Readback confirmation
     const info = await FileSystem.getInfoAsync(path);
     if (info.exists) {
-      console.log('Backup confirmed — size:', info.size, 'bytes');
+      console.warn('Backup confirmed — size:', info.size, 'bytes');
     }
   } catch (error) {
     console.error('iOS backup write failed:', error);
@@ -148,15 +148,14 @@ export async function writeBackupAndroid(json: string, accessToken: string): Pro
       fileId = created.id;
     }
 
-    console.log('Backup uploaded to Drive — file ID:', fileId);
+    console.warn('Backup uploaded to Drive — file ID:', fileId);
 
     // Readback confirmation
-    const infoRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=size`,
-      { headers: { Authorization: authHeader } },
-    );
+    const infoRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=size`, {
+      headers: { Authorization: authHeader },
+    });
     const infoData = (await infoRes.json()) as DriveFileInfo;
-    console.log('Drive backup confirmed — size:', infoData.size, 'bytes');
+    console.warn('Drive backup confirmed — size:', infoData.size, 'bytes');
   } catch (error) {
     console.error('Android Drive backup failed:', error);
     // Do not rethrow — fire-and-forget contract

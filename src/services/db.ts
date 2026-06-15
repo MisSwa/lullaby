@@ -187,10 +187,7 @@ export async function deleteLog(db: SQLite.SQLiteDatabase, id: string): Promise<
   }
 }
 
-export async function getSetting(
-  db: SQLite.SQLiteDatabase,
-  key: string,
-): Promise<string | null> {
+export async function getSetting(db: SQLite.SQLiteDatabase, key: string): Promise<string | null> {
   try {
     const row = await db.getFirstAsync<{ value: string }>(
       'SELECT value FROM settings WHERE key = ?;',

@@ -2,7 +2,14 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { Baby } from '../types/baby';
-import { BabyLog, ActiveTrackers, SleepLog, FeedLog, DiaperLog, NotificationType } from '../types/tracker';
+import {
+  BabyLog,
+  ActiveTrackers,
+  SleepLog,
+  FeedLog,
+  DiaperLog,
+  NotificationType,
+} from '../types/tracker';
 import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby } from '@services/db';
 import { useSettings } from '@context/SettingsContext';
 import { useNotifications } from '@hooks/useNotifications';
@@ -48,6 +55,10 @@ function logTypeToNotifType(logType: BabyLog['type']): NotificationType {
       return 'feed';
     case 'diaper':
       return 'diaper';
+    default: {
+      const _exhaustive: never = logType;
+      throw new Error(`Unhandled log type: ${JSON.stringify(_exhaustive)}`);
+    }
   }
 }
 

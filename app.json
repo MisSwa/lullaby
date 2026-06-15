@@ -6,6 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8F9FA"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.lullaby.app",
@@ -29,7 +34,15 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-file-system"
+      "expo-file-system",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#5F7A61",
+          "sounds": []
+        }
+      ]
     ]
   }
 }

@@ -9,5 +9,5 @@ export function getAccessToken(): string | null {
 
 export function setAccessToken(token: string): void {
   _accessToken = token;
-  console.log('Drive OAuth: access token stored in memory');
+  console.warn('Drive OAuth: access token stored in memory');
 }

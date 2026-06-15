@@ -24,11 +24,7 @@ export function useNotifications(): {
   }, []);
 
   const scheduleReminder = useCallback(
-    async (
-      type: NotificationType,
-      thresholdMinutes: number,
-      babyName?: string,
-    ): Promise<void> => {
+    async (type: NotificationType, thresholdMinutes: number, babyName?: string): Promise<void> => {
       await cancelReminder(type);
 
       const hours = thresholdMinutes / 60;
@@ -51,6 +47,10 @@ export function useNotifications(): {
           title = `Sleep reminder${nameTag}`;
           body = `${babyName ?? 'Baby'} has been asleep for ${hoursDisplay}h.`;
           break;
+        default: {
+          const _exhaustive: never = type;
+          throw new Error(`Unhandled notification type: ${JSON.stringify(_exhaustive)}`);
+        }
       }
 
       try {

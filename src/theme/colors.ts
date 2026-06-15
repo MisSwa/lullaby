@@ -17,6 +17,10 @@ export const COLORS = {
   // UI Status
   error: '#EF4444',
   success: '#10B981',
+
+  // Utility
+  shadow: '#000000', // iOS/Android elevation shadow color
+  overlay: 'rgba(0,0,0,0.35)', // Modal backdrop overlay
 } as const;
 
 export const TYPOGRAPHY = {

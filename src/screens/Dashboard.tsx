@@ -40,6 +40,10 @@ function colorForLog(log: BabyLog): string {
       return COLORS.feed;
     case 'diaper':
       return COLORS.diaper;
+    default: {
+      const _exhaustive: never = log;
+      throw new Error(`Unhandled log type: ${JSON.stringify(_exhaustive)}`);
+    }
   }
 }
 
@@ -57,6 +61,10 @@ function labelForLog(log: BabyLog): string {
       const diaperLog = log as DiaperLog;
       const status = diaperLog.status;
       return `DIAPER · ${status.charAt(0).toUpperCase()}${status.slice(1)}`;
+    }
+    default: {
+      const _exhaustive: never = log;
+      throw new Error(`Unhandled log type: ${JSON.stringify(_exhaustive)}`);
     }
   }
 }
@@ -400,7 +408,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -502,13 +510,13 @@ const styles = StyleSheet.create({
   },
   feedButton: {
     flex: 1,
-    height: 68,
+    height: 90,
     borderRadius: 12,
     backgroundColor: COLORS.feed,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -528,13 +536,13 @@ const styles = StyleSheet.create({
   },
   feedSaveButton: {
     width: 70,
-    height: 68,
+    height: 90,
     borderRadius: 12,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -558,7 +566,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -583,7 +591,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,

@@ -40,7 +40,10 @@ function parsePreference(raw: string | null, fallback: NotificationPref): Notifi
 
 interface SettingsContextType {
   notifications: NotificationSettings;
-  updateNotificationPref: (type: NotificationType, pref: Partial<NotificationPref>) => Promise<void>;
+  updateNotificationPref: (
+    type: NotificationType,
+    pref: Partial<NotificationPref>,
+  ) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

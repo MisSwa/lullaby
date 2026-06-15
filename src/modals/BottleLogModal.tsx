@@ -103,11 +103,7 @@ export const BottleLogModal: React.FC<BottleLogModalProps> = ({
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleDismiss}
-              disabled={saving}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={handleDismiss} disabled={saving}>
               <Text style={[styles.cancelButtonText, saving && styles.cancelButtonDisabled]}>
                 Cancel
               </Text>
