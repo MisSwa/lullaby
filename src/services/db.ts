@@ -26,7 +26,7 @@ export async function initializeDatabase(db: SQLite.SQLiteDatabase): Promise<voi
         feedType TEXT,
         leftDuration INTEGER,
         rightDuration INTEGER,
-        amountMl INTEGER,
+        amountMl REAL,
         status TEXT,
         FOREIGN KEY (baby_id) REFERENCES babies(id) ON DELETE CASCADE
       );

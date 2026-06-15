@@ -1,9 +1,10 @@
 import React, { Suspense } from 'react';
-import { ActivityIndicator, SafeAreaView, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { SQLiteProvider } from 'expo-sqlite';
 import { initializeDatabase } from '@services/db';
 import { TrackerProvider } from '@context/TrackerContext';
 import { SettingsProvider } from '@context/SettingsContext';
+import { AppShell } from '@screens/AppShell';
 import { COLORS } from '@theme/colors';
 
 function LoadingFallback(): React.ReactElement {
@@ -20,7 +21,7 @@ export default function App(): React.ReactElement {
       <SQLiteProvider databaseName="lullaby_local.db" onInit={initializeDatabase}>
         <TrackerProvider>
           <SettingsProvider>
-            <SafeAreaView style={styles.root} />
+            <AppShell />
           </SettingsProvider>
         </TrackerProvider>
       </SQLiteProvider>
@@ -33,10 +34,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
-  },
-  root: {
-    flex: 1,
     backgroundColor: COLORS.background,
   },
 });
