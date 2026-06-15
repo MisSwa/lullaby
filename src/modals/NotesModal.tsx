@@ -16,7 +16,7 @@ import { COLORS, TYPOGRAPHY } from '@theme/colors';
 interface NotesModalProps {
   visible: boolean;
   title: string;
-  elapsed: string;
+  elapsed?: string;
   onSave: (notes: string) => Promise<void>;
   onDismiss: () => void;
 }
@@ -55,7 +55,7 @@ export const NotesModal: React.FC<NotesModalProps> = ({
         >
           <View style={styles.inner}>
             <Text style={styles.title}>{title}</Text>
-            <Text style={styles.elapsed}>{elapsed}</Text>
+            {elapsed !== undefined && <Text style={styles.elapsed}>{elapsed}</Text>}
 
             <TextInput
               style={styles.notesInput}

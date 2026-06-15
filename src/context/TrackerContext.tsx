@@ -208,12 +208,48 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const logBottle = async (_amountMl: number, _notes?: string): Promise<void> => {
-    // Phase 4
+  const logBottle = async (amountMl: number, notes?: string): Promise<void> => {
+    if (!activeBabyId || amountMl < 1) return;
+    const log: FeedLog = {
+      id: Crypto.randomUUID(),
+      babyId: activeBabyId,
+      type: 'feed',
+      feedType: 'bottle',
+      timestamp: Date.now(),
+      leftDuration: 0,
+      rightDuration: 0,
+      amountMl,
+      notes: notes ?? '',
+    };
+    try {
+      await insertLog(db, log);
+      await refreshLogs();
+    } catch (error) {
+      console.error('Failed to log bottle:', error);
+      throw error;
+    }
   };
 
-  const logSolids = async (_notes?: string): Promise<void> => {
-    // Phase 4
+  const logSolids = async (notes?: string): Promise<void> => {
+    if (!activeBabyId) return;
+    const log: FeedLog = {
+      id: Crypto.randomUUID(),
+      babyId: activeBabyId,
+      type: 'feed',
+      feedType: 'solids',
+      timestamp: Date.now(),
+      leftDuration: 0,
+      rightDuration: 0,
+      amountMl: 0,
+      notes: notes ?? '',
+    };
+    try {
+      await insertLog(db, log);
+      await refreshLogs();
+    } catch (error) {
+      console.error('Failed to log solids:', error);
+      throw error;
+    }
   };
 
   const logDiaper = async (

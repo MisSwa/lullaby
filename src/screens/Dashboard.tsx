@@ -5,6 +5,7 @@ import { useLiveTick } from '@hooks/useLiveTick';
 import { BabyLog, FeedLog, SleepLog } from '../types/tracker';
 import { DashboardHeader } from './DashboardHeader';
 import { AddBabyModal } from '@modals/AddBabyModal';
+import { BottleLogModal } from '@modals/BottleLogModal';
 import { NotesModal } from '@modals/NotesModal';
 import { COLORS, TYPOGRAPHY } from '@theme/colors';
 
@@ -26,6 +27,10 @@ function formatFeedElapsed(secs: number): string {
   return `${m}m ${s}s`;
 }
 
+function formatAmount(ml: number): string {
+  return ml % 1 === 0 ? `${Math.round(ml)}ml` : `${ml.toFixed(1)}ml`;
+}
+
 function colorForLog(log: BabyLog): string {
   switch (log.type) {
     case 'sleep':
@@ -41,8 +46,12 @@ function labelForLog(log: BabyLog): string {
   switch (log.type) {
     case 'sleep':
       return 'SLEEP';
-    case 'feed':
-      return 'FEED';
+    case 'feed': {
+      const feedLog = log as FeedLog;
+      if (feedLog.feedType === 'breast') return 'FEED · Breast';
+      if (feedLog.feedType === 'bottle') return 'FEED · Bottle';
+      return 'FEED · Solids';
+    }
     case 'diaper':
       return 'DIAPER';
   }
@@ -57,11 +66,16 @@ function durationForLog(log: BabyLog): string {
   }
   if (log.type === 'feed') {
     const feedLog = log as FeedLog;
-    if (feedLog.feedType !== 'breast') return '';
-    const parts: string[] = [];
-    if (feedLog.leftDuration > 0) parts.push(`L ${formatFeedElapsed(feedLog.leftDuration)}`);
-    if (feedLog.rightDuration > 0) parts.push(`R ${formatFeedElapsed(feedLog.rightDuration)}`);
-    return parts.join(' · ');
+    if (feedLog.feedType === 'breast') {
+      const parts: string[] = [];
+      if (feedLog.leftDuration > 0) parts.push(`L ${formatFeedElapsed(feedLog.leftDuration)}`);
+      if (feedLog.rightDuration > 0) parts.push(`R ${formatFeedElapsed(feedLog.rightDuration)}`);
+      return parts.join(' · ');
+    }
+    if (feedLog.feedType === 'bottle') {
+      return formatAmount(feedLog.amountMl);
+    }
+    return '';
   }
   return '';
 }
@@ -100,11 +114,24 @@ const LogCard: React.FC<LogCardProps> = ({ log, onDelete }) => {
 // ─── Dashboard ──────────────────────────────────────────────────────────────
 
 export const Dashboard: React.FC = () => {
-  const { logs, active, startSleep, stopSleep, removeLog, toggleBreastFeed, saveBreastFeed } =
-    useTracker();
+  const {
+    logs,
+    active,
+    startSleep,
+    stopSleep,
+    removeLog,
+    toggleBreastFeed,
+    saveBreastFeed,
+    logBottle,
+    logSolids,
+  } = useTracker();
   const [showAddBaby, setShowAddBaby] = useState(false);
   const [notesVisible, setNotesVisible] = useState(false);
   const [feedNotesVisible, setFeedNotesVisible] = useState(false);
+  const [bottleModalVisible, setBottleModalVisible] = useState(false);
+  const [pendingBottleNotes, setPendingBottleNotes] = useState('');
+  const [bottleNotesVisible, setBottleNotesVisible] = useState(false);
+  const [solidsNotesVisible, setSolidsNotesVisible] = useState(false);
 
   const sleepElapsed = useLiveTick(active.sleepStart);
   const leftTick = useLiveTick(active.feedLeftStart);
@@ -139,6 +166,40 @@ export const Dashboard: React.FC = () => {
   const handleSaveFeedNotes = async (notes: string): Promise<void> => {
     await saveBreastFeed(notes);
     setFeedNotesVisible(false);
+  };
+
+  const handleBottlePress = (): void => {
+    setPendingBottleNotes('');
+    setBottleModalVisible(true);
+  };
+
+  const handleBottleLongPress = (): void => {
+    setBottleNotesVisible(true);
+  };
+
+  const handleBottleNoteSaved = async (notes: string): Promise<void> => {
+    setPendingBottleNotes(notes);
+    setBottleNotesVisible(false);
+    setBottleModalVisible(true);
+  };
+
+  const handleBottleSave = async (amountMl: number): Promise<void> => {
+    await logBottle(amountMl, pendingBottleNotes || undefined);
+    setBottleModalVisible(false);
+    setPendingBottleNotes('');
+  };
+
+  const handleSolidsPress = async (): Promise<void> => {
+    await logSolids();
+  };
+
+  const handleSolidsLongPress = (): void => {
+    setSolidsNotesVisible(true);
+  };
+
+  const handleSolidsNoteSaved = async (notes: string): Promise<void> => {
+    await logSolids(notes);
+    setSolidsNotesVisible(false);
   };
 
   return (
@@ -185,6 +246,27 @@ export const Dashboard: React.FC = () => {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Bottle / Solids row */}
+        <View style={styles.quickFeedRow}>
+          <TouchableOpacity
+            style={styles.quickFeedButton}
+            onPress={handleBottlePress}
+            onLongPress={handleBottleLongPress}
+            delayLongPress={400}
+          >
+            <Text style={styles.quickFeedButtonLabel}>Bottle</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickFeedButton}
+            onPress={handleSolidsPress}
+            onLongPress={handleSolidsLongPress}
+            delayLongPress={400}
+          >
+            <Text style={styles.quickFeedButtonLabel}>Solids</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Log list */}
@@ -216,6 +298,27 @@ export const Dashboard: React.FC = () => {
         elapsed={feedModalElapsed}
         onSave={handleSaveFeedNotes}
         onDismiss={() => setFeedNotesVisible(false)}
+      />
+      <NotesModal
+        visible={bottleNotesVisible}
+        title="Add Note — Bottle"
+        onSave={handleBottleNoteSaved}
+        onDismiss={() => setBottleNotesVisible(false)}
+      />
+      <NotesModal
+        visible={solidsNotesVisible}
+        title="Add Note — Solids"
+        onSave={handleSolidsNoteSaved}
+        onDismiss={() => setSolidsNotesVisible(false)}
+      />
+      <BottleLogModal
+        visible={bottleModalVisible}
+        prefillNotes={pendingBottleNotes}
+        onSave={handleBottleSave}
+        onDismiss={() => {
+          setBottleModalVisible(false);
+          setPendingBottleNotes('');
+        }}
       />
     </SafeAreaView>
   );
@@ -385,6 +488,31 @@ const styles = StyleSheet.create({
   feedSaveButtonText: {
     fontSize: TYPOGRAPHY.size.sm,
     fontWeight: 'bold',
+    color: COLORS.surface,
+  },
+  // Bottle / Solids row
+  quickFeedRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+  },
+  quickFeedButton: {
+    flex: 1,
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: COLORS.feed,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    opacity: 0.85,
+  },
+  quickFeedButtonLabel: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '600',
     color: COLORS.surface,
   },
 });
