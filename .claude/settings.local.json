@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && git init && git add CLAUDE.md readme.md specs/ && git commit -m \"$\\(cat <<'EOF'\nInitial project constitution and specs\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && git checkout -b phase-0-project-skeleton)",
+      "Bash(cp /tmp/lullaby-scaffold/package-lock.json \"/Users/swathiravi/Documents/Personal Projects/lullaby/package-lock.json\" && cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npm install 2>&1 | tail -5)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npx expo install expo-sqlite expo-crypto 2>&1 | tail -8)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-react-native prettier eslint-config-prettier eslint-plugin-prettier babel-plugin-module-resolver 2>&1 | tail -6)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npm run lint 2>&1)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && node -e \"console.log\\(require\\('./node_modules/eslint/package.json'\\).version, require\\('./node_modules/@typescript-eslint/eslint-plugin/package.json'\\).version, require\\('./node_modules/eslint-plugin-react/package.json'\\).version, require\\('./node_modules/eslint-plugin-react-hooks/package.json'\\).version\\)\")",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npm install --save-dev typescript-eslint @eslint/js 2>&1 | tail -4)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npm install --save-dev typescript-eslint @eslint/js --legacy-peer-deps 2>&1 | tail -4)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npm install --save-dev globals --legacy-peer-deps 2>&1 | tail -3 && npm run lint 2>&1)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npx prettier --write src/services/db.ts 2>&1)",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npm run lint 2>&1 && echo \"LINT_PASSED\" || echo \"LINT_FAILED\")",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && npx tsc --noEmit 2>&1 && echo \"TSC_PASSED\" || echo \"TSC_FAILED\")",
+      "Bash(cd \"/Users/swathiravi/Documents/Personal Projects/lullaby\" && git add -A && git status)"
+    ]
+  }
+}
