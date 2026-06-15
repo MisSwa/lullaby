@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { Baby } from '../types/baby';
-import { BabyLog, ActiveTrackers, SleepLog, FeedLog } from '../types/tracker';
+import { BabyLog, ActiveTrackers, SleepLog, FeedLog, DiaperLog } from '../types/tracker';
 import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby } from '@services/db';
 
 interface TrackerContextType {
@@ -253,10 +253,25 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const logDiaper = async (
-    _status: 'wet' | 'dirty' | 'mixed' | 'dry',
-    _notes?: string,
+    status: DiaperLog['status'],
+    notes?: string,
   ): Promise<void> => {
-    // Phase 5
+    if (!activeBabyId) return;
+    const log: DiaperLog = {
+      id: Crypto.randomUUID(),
+      babyId: activeBabyId,
+      type: 'diaper',
+      status,
+      timestamp: Date.now(),
+      notes: notes ?? '',
+    };
+    try {
+      await insertLog(db, log);
+      await refreshLogs();
+    } catch (error) {
+      console.error('Failed to log diaper:', error);
+      throw error;
+    }
   };
 
   return (

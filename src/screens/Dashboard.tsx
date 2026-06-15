@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
 import { useLiveTick } from '@hooks/useLiveTick';
-import { BabyLog, FeedLog, SleepLog } from '../types/tracker';
+import { BabyLog, DiaperLog, FeedLog, SleepLog } from '../types/tracker';
 import { DashboardHeader } from './DashboardHeader';
 import { AddBabyModal } from '@modals/AddBabyModal';
 import { BottleLogModal } from '@modals/BottleLogModal';
@@ -52,8 +52,11 @@ function labelForLog(log: BabyLog): string {
       if (feedLog.feedType === 'bottle') return 'FEED · Bottle';
       return 'FEED · Solids';
     }
-    case 'diaper':
-      return 'DIAPER';
+    case 'diaper': {
+      const diaperLog = log as DiaperLog;
+      const status = diaperLog.status;
+      return `DIAPER · ${status.charAt(0).toUpperCase()}${status.slice(1)}`;
+    }
   }
 }
 
@@ -124,6 +127,7 @@ export const Dashboard: React.FC = () => {
     saveBreastFeed,
     logBottle,
     logSolids,
+    logDiaper,
   } = useTracker();
   const [showAddBaby, setShowAddBaby] = useState(false);
   const [notesVisible, setNotesVisible] = useState(false);
@@ -132,6 +136,8 @@ export const Dashboard: React.FC = () => {
   const [pendingBottleNotes, setPendingBottleNotes] = useState('');
   const [bottleNotesVisible, setBottleNotesVisible] = useState(false);
   const [solidsNotesVisible, setSolidsNotesVisible] = useState(false);
+  const [diaperNotesVisible, setDiaperNotesVisible] = useState(false);
+  const [pendingDiaperStatus, setPendingDiaperStatus] = useState<DiaperLog['status'] | null>(null);
 
   const sleepElapsed = useLiveTick(active.sleepStart);
   const leftTick = useLiveTick(active.feedLeftStart);
@@ -202,6 +208,22 @@ export const Dashboard: React.FC = () => {
     setSolidsNotesVisible(false);
   };
 
+  const handleDiaperPress = async (status: DiaperLog['status']): Promise<void> => {
+    await logDiaper(status);
+  };
+
+  const handleDiaperLongPress = (status: DiaperLog['status']): void => {
+    setPendingDiaperStatus(status);
+    setDiaperNotesVisible(true);
+  };
+
+  const handleDiaperNoteSaved = async (notes: string): Promise<void> => {
+    if (pendingDiaperStatus === null) return;
+    await logDiaper(pendingDiaperStatus, notes);
+    setDiaperNotesVisible(false);
+    setPendingDiaperStatus(null);
+  };
+
   return (
     <SafeAreaView style={styles.root}>
       <DashboardHeader onAddBaby={() => setShowAddBaby(true)} />
@@ -267,6 +289,23 @@ export const Dashboard: React.FC = () => {
             <Text style={styles.quickFeedButtonLabel}>Solids</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Diaper buttons */}
+        <View style={styles.diaperRow}>
+          {(['wet', 'dirty', 'mixed', 'dry'] as const).map(status => (
+            <TouchableOpacity
+              key={status}
+              style={styles.diaperButton}
+              onPress={() => handleDiaperPress(status)}
+              onLongPress={() => handleDiaperLongPress(status)}
+              delayLongPress={400}
+            >
+              <Text style={styles.diaperButtonLabel}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       {/* Log list */}
@@ -318,6 +357,15 @@ export const Dashboard: React.FC = () => {
         onDismiss={() => {
           setBottleModalVisible(false);
           setPendingBottleNotes('');
+        }}
+      />
+      <NotesModal
+        visible={diaperNotesVisible}
+        title={`Add Note — ${pendingDiaperStatus !== null ? pendingDiaperStatus.charAt(0).toUpperCase() + pendingDiaperStatus.slice(1) : ''}`}
+        onSave={handleDiaperNoteSaved}
+        onDismiss={() => {
+          setDiaperNotesVisible(false);
+          setPendingDiaperStatus(null);
         }}
       />
     </SafeAreaView>
@@ -512,6 +560,30 @@ const styles = StyleSheet.create({
   },
   quickFeedButtonLabel: {
     fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '600',
+    color: COLORS.surface,
+  },
+  // Diaper row
+  diaperRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  diaperButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: COLORS.diaper,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+  },
+  diaperButtonLabel: {
+    fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '600',
     color: COLORS.surface,
   },
