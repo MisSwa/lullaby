@@ -32,6 +32,11 @@ export async function initializeDatabase(db: SQLite.SQLiteDatabase): Promise<voi
       );
 
       CREATE INDEX IF NOT EXISTS idx_logs_baby_timestamp ON baby_logs (baby_id, timestamp DESC);
+
+      CREATE TABLE IF NOT EXISTS settings (
+        key   TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL
+      );
     `);
 
     console.warn('Lullaby database initialized (WAL mode, FK enabled).');
@@ -178,6 +183,38 @@ export async function deleteLog(db: SQLite.SQLiteDatabase, id: string): Promise<
     await db.runAsync('DELETE FROM baby_logs WHERE id = ?;', [id]);
   } catch (error) {
     console.error('Failed to delete log:', error);
+    throw error;
+  }
+}
+
+export async function getSetting(
+  db: SQLite.SQLiteDatabase,
+  key: string,
+): Promise<string | null> {
+  try {
+    const row = await db.getFirstAsync<{ value: string }>(
+      'SELECT value FROM settings WHERE key = ?;',
+      [key],
+    );
+    return row?.value ?? null;
+  } catch (error) {
+    console.error(`Failed to get setting "${key}":`, error);
+    return null;
+  }
+}
+
+export async function setSetting(
+  db: SQLite.SQLiteDatabase,
+  key: string,
+  value: string,
+): Promise<void> {
+  try {
+    await db.runAsync(
+      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value;',
+      [key, value],
+    );
+  } catch (error) {
+    console.error(`Failed to set setting "${key}":`, error);
     throw error;
   }
 }

@@ -2,8 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { Baby } from '../types/baby';
-import { BabyLog, ActiveTrackers, SleepLog, FeedLog, DiaperLog } from '../types/tracker';
+import { BabyLog, ActiveTrackers, SleepLog, FeedLog, DiaperLog, NotificationType } from '../types/tracker';
 import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby } from '@services/db';
+import { useSettings } from '@context/SettingsContext';
+import { useNotifications } from '@hooks/useNotifications';
 
 interface TrackerContextType {
   babies: Baby[];
@@ -14,7 +16,6 @@ interface TrackerContextType {
   refreshLogs: () => Promise<void>;
   startSleep: () => void;
   stopSleep: (notes?: string) => Promise<void>;
-  // Stubs — implemented in later phases
   toggleBreastFeed: (side: 'left' | 'right') => void;
   saveBreastFeed: (notes?: string) => Promise<void>;
   logBottle: (amountMl: number, notes?: string) => Promise<void>;
@@ -39,10 +40,24 @@ function todayRange(): { start: number; end: number } {
   return { start, end };
 }
 
+function logTypeToNotifType(logType: BabyLog['type']): NotificationType {
+  switch (logType) {
+    case 'sleep':
+      return 'sleep';
+    case 'feed':
+      return 'feed';
+    case 'diaper':
+      return 'diaper';
+  }
+}
+
 const TrackerContext = createContext<TrackerContextType | undefined>(undefined);
 
 export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const db = useSQLiteContext();
+  const { notifications } = useSettings();
+  const { scheduleReminder, cancelReminder } = useNotifications();
+
   const [babies, setBabies] = useState<Baby[]>([]);
   const [activeBabyId, setActiveBabyId] = useState<string | null>(null);
   const [logs, setLogs] = useState<BabyLog[]>([]);
@@ -79,23 +94,55 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     refreshLogs();
   }, [refreshLogs]);
 
+  // ─── Notification helpers ────────────────────────────────────────────────────
+
+  const afterInsert = useCallback(
+    async (log: BabyLog, currentBabies: Baby[]): Promise<void> => {
+      const notifType = logTypeToNotifType(log.type);
+      const pref = notifications[notifType];
+      if (!pref.enabled) return;
+      const activeBaby = currentBabies.find(b => b.id === log.babyId);
+      const babyName = currentBabies.length > 1 ? activeBaby?.name : undefined;
+      await scheduleReminder(notifType, pref.thresholdMinutes, babyName);
+    },
+    [notifications, scheduleReminder],
+  );
+
+  const afterDelete = useCallback(
+    async (logType: BabyLog['type']): Promise<void> => {
+      const notifType = logTypeToNotifType(logType);
+      await cancelReminder(notifType);
+    },
+    [cancelReminder],
+  );
+
+  // ─── Baby management ─────────────────────────────────────────────────────────
+
   const handleCreateBaby = async (name: string, dob: number): Promise<void> => {
     try {
       const baby = await createBaby(db, name, dob);
-      setBabies(prev => [...prev, baby]);
-      if (!hasSetInitialBaby.current) {
-        hasSetInitialBaby.current = true;
-        setActiveBabyId(baby.id);
-      }
+      setBabies(prev => {
+        if (!hasSetInitialBaby.current) {
+          hasSetInitialBaby.current = true;
+          setActiveBabyId(baby.id);
+        }
+        return [...prev, baby];
+      });
     } catch (error) {
       console.error('Failed to create baby:', error);
       throw error;
     }
   };
 
+  // ─── Log management ──────────────────────────────────────────────────────────
+
   const removeLog = async (id: string): Promise<void> => {
+    const logToRemove = logs.find(l => l.id === id);
     try {
       await deleteLog(db, id);
+      if (logToRemove) {
+        await afterDelete(logToRemove.type);
+      }
       await refreshLogs();
     } catch (error) {
       console.error('Failed to remove log:', error);
@@ -103,7 +150,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // --- Sleep ---
+  // ─── Sleep ───────────────────────────────────────────────────────────────────
 
   const startSleep = (): void => {
     setActive(prev => ({ ...prev, sleepStart: Date.now() }));
@@ -123,13 +170,14 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
       await insertLog(db, log);
       setActive(prev => ({ ...prev, sleepStart: null }));
       await refreshLogs();
+      await afterInsert(log, babies);
     } catch (error) {
       console.error('Failed to stop sleep:', error);
       throw error;
     }
   };
 
-  // --- Breast Feed ---
+  // ─── Breast Feed ─────────────────────────────────────────────────────────────
 
   const toggleBreastFeed = (side: 'left' | 'right'): void => {
     const now = Date.now();
@@ -140,12 +188,10 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const myElapsed = isLeft ? prev.feedLeftElapsed : prev.feedRightElapsed;
       const otherElapsed = isLeft ? prev.feedRightElapsed : prev.feedLeftElapsed;
 
-      // Accumulate other side if it's currently running (auto-pause)
       const newOtherElapsed =
         otherStart !== null ? otherElapsed + Math.floor((now - otherStart) / 1000) : otherElapsed;
 
       if (myStart !== null) {
-        // Pause my side
         const newMyElapsed = myElapsed + Math.floor((now - myStart) / 1000);
         return isLeft
           ? {
@@ -163,7 +209,6 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
               feedLeftElapsed: newOtherElapsed,
             };
       } else {
-        // Start my side, pause other side
         return isLeft
           ? { ...prev, feedLeftStart: now, feedRightStart: null, feedRightElapsed: newOtherElapsed }
           : { ...prev, feedRightStart: now, feedLeftStart: null, feedLeftElapsed: newOtherElapsed };
@@ -202,11 +247,14 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
         feedRightElapsed: 0,
       }));
       await refreshLogs();
+      await afterInsert(log, babies);
     } catch (error) {
       console.error('Failed to save breast feed:', error);
       throw error;
     }
   };
+
+  // ─── Bottle & Solids ─────────────────────────────────────────────────────────
 
   const logBottle = async (amountMl: number, notes?: string): Promise<void> => {
     if (!activeBabyId || amountMl < 1) return;
@@ -224,6 +272,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       await insertLog(db, log);
       await refreshLogs();
+      await afterInsert(log, babies);
     } catch (error) {
       console.error('Failed to log bottle:', error);
       throw error;
@@ -246,16 +295,16 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       await insertLog(db, log);
       await refreshLogs();
+      await afterInsert(log, babies);
     } catch (error) {
       console.error('Failed to log solids:', error);
       throw error;
     }
   };
 
-  const logDiaper = async (
-    status: DiaperLog['status'],
-    notes?: string,
-  ): Promise<void> => {
+  // ─── Diaper ──────────────────────────────────────────────────────────────────
+
+  const logDiaper = async (status: DiaperLog['status'], notes?: string): Promise<void> => {
     if (!activeBabyId) return;
     const log: DiaperLog = {
       id: Crypto.randomUUID(),
@@ -268,6 +317,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       await insertLog(db, log);
       await refreshLogs();
+      await afterInsert(log, babies);
     } catch (error) {
       console.error('Failed to log diaper:', error);
       throw error;

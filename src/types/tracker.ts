@@ -36,3 +36,18 @@ export interface ActiveTrackers {
   feedLeftElapsed: number; // accumulated seconds
   feedRightElapsed: number; // accumulated seconds
 }
+
+// ─── Notification Settings ───────────────────────────────────────────────────
+
+export type NotificationType = 'feed' | 'diaper' | 'sleep';
+
+export interface NotificationPref {
+  enabled: boolean;
+  thresholdMinutes: number;
+}
+
+export interface NotificationSettings {
+  feed: NotificationPref;
+  diaper: NotificationPref;
+  sleep: NotificationPref;
+}

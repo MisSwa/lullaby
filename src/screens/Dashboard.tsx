@@ -7,6 +7,7 @@ import { DashboardHeader } from './DashboardHeader';
 import { AddBabyModal } from '@modals/AddBabyModal';
 import { BottleLogModal } from '@modals/BottleLogModal';
 import { NotesModal } from '@modals/NotesModal';
+import { SettingsModal } from '@modals/SettingsModal';
 import { COLORS, TYPOGRAPHY } from '@theme/colors';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -130,6 +131,7 @@ export const Dashboard: React.FC = () => {
     logDiaper,
   } = useTracker();
   const [showAddBaby, setShowAddBaby] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [notesVisible, setNotesVisible] = useState(false);
   const [feedNotesVisible, setFeedNotesVisible] = useState(false);
   const [bottleModalVisible, setBottleModalVisible] = useState(false);
@@ -226,7 +228,10 @@ export const Dashboard: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.root}>
-      <DashboardHeader onAddBaby={() => setShowAddBaby(true)} />
+      <DashboardHeader
+        onAddBaby={() => setShowAddBaby(true)}
+        onSettingsPress={() => setSettingsVisible(true)}
+      />
 
       {/* Action zone */}
       <View style={styles.actionZone}>
@@ -323,6 +328,7 @@ export const Dashboard: React.FC = () => {
       </ScrollView>
 
       {/* Modals */}
+      <SettingsModal visible={settingsVisible} onDismiss={() => setSettingsVisible(false)} />
       <AddBabyModal visible={showAddBaby} onDismiss={() => setShowAddBaby(false)} />
       <NotesModal
         visible={notesVisible}
