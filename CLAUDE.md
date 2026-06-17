@@ -40,9 +40,16 @@ The following packages are approved. Do not add any package not on this list wit
 | `expo-notifications` | Local push notifications for smart reminders |
 | `expo-file-system` | Reading/writing backup files for cloud sync |
 | `expo-document-picker` | iOS iCloud / Android Google Drive file access |
+| `expo-font` | Peer dep of @expo/vector-icons; provides font loading infrastructure |
+| `expo-asset` | Peer dep of expo-font; provides asset resolution for bundled font files |
+| `expo-auth-session` | Google Drive OAuth for Android background backup (only non-user-facing auth) |
+| `expo-status-bar` | Status bar tinting to match app theme |
+| `@expo/vector-icons` | Icon sets (Ionicons, MaterialCommunityIcons) for UI icons and card watermarks |
+| `@react-native-community/datetimepicker` | Native date/time picker for retroactive session time correction in modals |
+| `@react-native-community/slider` | Native slider for bottle amount input (0–300 ml, step 5) |
 | React Native core | `AppState`, `TouchableOpacity`, `StyleSheet`, etc. |
 
-**Forbidden categories:** HTTP clients, analytics SDKs, crash reporting SDKs, UI component libraries, date formatting libraries (use `Intl.DateTimeFormat` or native `.toLocaleTimeString()`).
+**Forbidden categories:** HTTP clients, analytics SDKs, crash reporting SDKs, UI component libraries, date formatting libraries (use `Intl.DateTimeFormat` or native `.toLocaleTimeString()`). Note: `@expo/vector-icons` is explicitly approved as an **icon library** and is not considered a UI component library under this rule.
 
 ---
 
@@ -107,13 +114,14 @@ Active timers (sleep, breast feed sides) are never written to SQLite until the u
 - **Onboarding:** A mandatory setup screen shown on first launch. Collects baby name and date of birth. Cannot proceed to dashboard without at least one baby profile.
 - **Multi-baby:** Header dropdown switcher to select the active baby. All tracking is scoped to the currently selected baby.
 - **Sleep tracking:** Toggle start/stop. Live elapsed timer on dashboard. Saves start + end Unix timestamps.
-- **Breast feed tracking:** Independent left/right side timers. Only one side can run at a time — starting one auto-pauses the other. Live elapsed display per side. "Save Session" button appears once any time has been accumulated.
-- **Bottle feed logging:** Modal input for ml amount. Single tap to log.
-- **Solids logging:** Single tap to log. No amount field.
-- **Diaper logging:** Four status options inline (wet / dirty / mixed / dry). Single tap to log.
+- **Breast feed tracking:** Accessed via FeedModal (Nursing tab). Two large L/R circle buttons with live elapsed timers under each. Only one side can run at a time — starting one auto-pauses the other. "Save Session" button appears once any time > 0 has accumulated. Quick-tap nursing card opens FeedModal pre-set to Nursing tab.
+- **Bottle feed logging:** Via FeedModal (Bottle tab) — slider (0–300 ml, step 5), ml/oz toggle reads from SettingsContext, retroactive time correction available.
+- **Solids logging:** Third option in FeedModal; single tap to log, no amount field.
+- **Diaper logging:** Modal-based via DiaperModal — tapping the card opens a modal with four large icon buttons (Pee/Poo/Mixed/Dry). Tapping a button auto-saves and closes. Retroactive timestamp correction available before tapping.
 - **Today-only log list:** Reverse-chronological list of today's events for the active baby. No pagination or date picker.
 - **Delete log:** Swipe or tap ✕ to delete any log entry.
 - **Smart notifications:** Configurable local push reminders based on elapsed time since the last logged event (feed, diaper, sleep). Powered by `expo-notifications`.
+- **Settings modal:** SettingsModal (gear icon in header) — controls theme (light/system/dark), units (ml/oz), and notification thresholds per type.
 - **Automatic background backup:** On `AppState` transition to `background`, silently export a JSON snapshot of all data and write it to iCloud (iOS) or Google Drive (Android) via `expo-file-system`. The user is never interrupted.
 
 ### Explicitly Out of Scope for v1
@@ -134,10 +142,14 @@ Active timers (sleep, breast feed sides) are never written to SQLite until the u
 
 There is one screen: `Dashboard`. Supplementary flows use React Native `Modal` components rendered inside `Dashboard`:
 
-- `OnboardingModal` — shown when no baby profiles exist
-- `AddBabyModal` — triggered from header when user wants to add a second baby
-- `BottleLogModal` — input for ml amount
-- `NotesModal` — optional notes before saving a sleep or feed session
+- `OnboardingModal` — first-launch baby setup (name + DOB)
+- `AddBabyModal` — add additional baby profile from header
+- `DiaperModal` — four icon buttons (Pee/Poo/Mixed/Dry); tap auto-logs and closes; retroactive timestamp
+- `FeedModal` — unified Nursing + Bottle tabs; replaces the deleted `BottleLogModal`
+- `NotesModal` — optional free-text notes; used when ending a sleep session
+- `SettingsModal` — app preferences (theme, units, notification thresholds per category)
+
+`BottleLogModal` is deleted — fully replaced by `FeedModal`.
 
 No `react-navigation`, `expo-router`, or any navigation library is permitted.
 
@@ -151,6 +163,9 @@ One context: `TrackerContext`. It owns:
 
 A separate `SettingsContext` owns:
 - Notification preferences (enabled/disabled per type, threshold minutes)
+- `theme: 'system' | 'light' | 'dark'` — controls `useTheme()` override
+- `units: 'ml' | 'oz'` — persisted; used in FeedModal bottle tab and log list display
+- `updateUnits(u: 'ml' | 'oz'): void`
 
 No prop drilling beyond two levels. If a component needs data from more than two levels up, it must consume context directly.
 
@@ -170,11 +185,12 @@ This is a paid app. Timer data must never drift or be lost.
 ### 7.1 Color Palette
 
 ```ts
-// src/theme/colors.ts — canonical source
+// src/theme/colors.ts — canonical source (LIGHT palette)
 primary: '#5F7A61'        // Deep Premium Sage Green
 primaryLight: '#D5E0D5'   // Soft Wash Sage
 background: '#F8F9FA'     // Clean Slate Off-White
 surface: '#FFFFFF'         // Card Backgrounds
+surfaceAlt: '#F0F4F0'     // Subtle sage-tinted surface for app header background
 textPrimary: '#2D3748'    // Deep Charcoal Slate
 textMuted: '#718096'      // Soft Gray Text
 border: '#E2E8F0'         // Subtle Divider Line
@@ -186,6 +202,7 @@ active: '#10B981'         // Vibrant Active Emerald (running timer state)
 
 error: '#EF4444'
 success: '#10B981'
+shadow: '#000000'         // Used as shadowColor on cards
 ```
 
 No color may be hardcoded inline. Every color reference must go through the `COLORS` object from `src/theme/colors.ts`.
@@ -197,6 +214,16 @@ All interactive elements must be a minimum of 44×44 logical pixels. This is a o
 ### 7.3 Typography
 
 System font only. No custom font loading. Use the `TYPOGRAPHY.size` scale from `src/theme/colors.ts`.
+
+### 7.4 Card Design Principles
+
+- Cards use a **colored header band** at top (category color fill) with the card label and action icons (bell, live badge) in white.
+- Cards use a **double-wrapper pattern**: outer `TouchableOpacity` carries shadow (no `overflow: hidden`); inner `View` has `overflow: 'hidden'` + `borderRadius: 16` to clip header band corners.
+- **Ghost watermark icon** on the right side of the card body at 10% opacity; 88px for full-width cards, 60–68px for half-width.
+- No border on cards — separation provided by shadow (`shadowOpacity: 0.09, shadowRadius: 10, elevation: 4`).
+- The `timeSince` value is the primary metric: 22px bold on full-width cards, 16px on half-width.
+- Dashboard card zone uses `COLORS.background` (not `surface`) so cards float above the page.
+- Header uses `COLORS.surfaceAlt` for a warm sage tint.
 
 ---
 
@@ -249,26 +276,44 @@ System font only. No custom font loading. Use the `TYPOGRAPHY.size` scale from `
 ```
 src/
   theme/
-    colors.ts              — COLORS and TYPOGRAPHY constants
+    colors.ts              — LIGHT, DARK palettes, COLORS (deprecated alias), TYPOGRAPHY
   types/
-    tracker.ts             — All TypeScript interfaces and discriminated unions
+    tracker.ts             — BabyLog union (SleepLog | FeedLog | DiaperLog), AppTheme, AppUnits
+    baby.ts                — Baby profile interface
   services/
-    db.ts                  — SQLite init, CRUD operations
-    backup.ts              — JSON export and cloud write logic
+    db.ts                  — SQLite init, WAL mode, CRUD
+    backup.ts              — JSON snapshot export + cloud write
   context/
-    TrackerContext.tsx     — All tracking state and actions
-    SettingsContext.tsx    — Notification prefs and app settings
+    TrackerContext.tsx     — Tracking state: babies, activeBabyId, logs, active timers, actions
+    SettingsContext.tsx    — Theme, units, notification prefs, persisted to SQLite key-value
   hooks/
-    useNotifications.ts    — Scheduling and cancelling local notifications
-    useLiveTick.ts         — 1-second interval hook for live timer display
+    useNotifications.ts    — Schedule/cancel local push reminders per log type
+    useLiveTick.ts         — 1-second interval → elapsed seconds from a start timestamp
+    useTheme.ts            — Returns ColorPalette matching OS scheme + SettingsContext override
   screens/
-    Dashboard.tsx          — The one and only screen
+    Dashboard.tsx          — Single screen: card zone + log list + all modals
+    DashboardHeader.tsx    — Baby avatar, age string, multi-baby switcher dropdown, gear icon
+  components/
+    ActiveSleepView.tsx    — Full-width sleep takeover: large HH:MM:SS, editable start, STOP button
+    cards/
+      SleepCard.tsx        — Sleep tracking card (full-width)
+      NursingCard.tsx      — Breast feed card (half-width, paired with BottleCard)
+      BottleCard.tsx       — Bottle feed card (half-width, paired with NursingCard)
+      DiaperCard.tsx       — Diaper card (full-width)
   modals/
-    OnboardingModal.tsx    — First-launch baby setup
-    AddBabyModal.tsx       — Add additional baby profile
-    BottleLogModal.tsx     — Bottle amount input
-    NotesModal.tsx         — Optional notes before saving a session
-App.tsx                    — Root: SQLiteProvider > TrackerProvider > SettingsProvider > Dashboard
+    OnboardingModal.tsx    — First-launch: name + DOB collection, blocks dashboard until done
+    AddBabyModal.tsx       — Add a new baby profile
+    DiaperModal.tsx        — 4-button diaper picker (replaces old inline buttons)
+    FeedModal.tsx          — Unified Nursing/Bottle/Solids modal (replaces deleted BottleLogModal)
+    NotesModal.tsx         — Optional text notes when ending a sleep session
+    SettingsModal.tsx      — App preferences: theme, units, notification thresholds
+  utils/
+    ageString.ts           — computeAge(dob: number): string → "4 months" / "2 years 3 months"
+    timeSince.ts           — timeSince(ts: number | null, now: number): string → "2h 14m ago" / "–"
+scripts/
+  patch-rn-podspecs.js     — Postinstall patcher for React Native podspec compatibility
+App.tsx                    — SQLiteProvider → TrackerProvider → SettingsProvider → Dashboard
+index.ts                   — Entry point
 ```
 
 ---

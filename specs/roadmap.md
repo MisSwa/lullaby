@@ -82,9 +82,9 @@
 **Scope:** Replace the four inline diaper status buttons on the dashboard card with a proper modal.
 
 ### Deliverables
-- [ ] **New file: `src/modals/DiaperModal.tsx`** — a `Modal` component following the same pattern as `BottleLogModal`
-- [ ] The diaper card becomes a **single-tap card** — tapping anywhere on it opens `DiaperModal`; the four inline status buttons are removed from the card
-- [ ] Modal contents:
+- [x] **New file: `src/modals/DiaperModal.tsx`** — a `Modal` component following the same pattern as `BottleLogModal`
+- [x] The diaper card becomes a **single-tap card** — tapping anywhere on it opens `DiaperModal`; the four inline status buttons are removed from the card
+- [x] Modal contents:
   - **"Log Diaper"** header + X close button
   - **"Started at" row** — shows "Today, HH:MM AM/PM"; tapping opens the datetimepicker to correct retroactively (same 12h clamp rule as Phase 2)
   - **Four large circle icon buttons** (~100px diameter) in a 2×2 grid or horizontal scroll:
@@ -94,14 +94,14 @@
     - Dry — dashed droplet (outline style), `COLORS.diaper` at 50% opacity
   - Tapping a circle **auto-saves the log and closes the modal** — no separate Save button needed
   - Each circle has a label below it (Pee / Poo / Mixed / Dry)
-- [ ] Light/dark theming on modal background and button states
+- [x] Light/dark theming on modal background and button states
 
 ### Done when
-- Tapping the diaper card opens the modal
-- Tapping a status icon logs immediately and closes
-- Start time is editable before logging
-- Modal handles the "no baby selected" empty state gracefully
-- Zero TypeScript errors
+- Tapping the diaper card opens the modal ✓
+- Tapping a status icon logs immediately and closes ✓
+- Start time is editable before logging ✓
+- Modal handles the "no baby selected" empty state gracefully ✓
+- Zero TypeScript errors ✓
 
 ---
 
@@ -109,9 +109,9 @@
 **Scope:** Replace `BottleLogModal` and the inline nursing buttons with a single "Add Feeding" modal containing a segmented Nursing / Bottle tab switcher.
 
 ### Deliverables
-- [ ] **New file: `src/modals/FeedModal.tsx`** — replaces `BottleLogModal.tsx`; `BottleLogModal.tsx` is deleted
-- [ ] Modal has a **Nursing | Bottle** segmented control at the top (two pill tabs, selected fills with `COLORS.feed`)
-- [ ] **Nursing tab:**
+- [x] **New file: `src/modals/FeedModal.tsx`** — replaces `BottleLogModal.tsx`; `BottleLogModal.tsx` is deleted
+- [x] Modal has a **Nursing | Bottle** segmented control at the top (two pill tabs, selected fills with `COLORS.feed`)
+- [x] **Nursing tab:**
   - Two large circle buttons (~120px diameter): LEFT and RIGHT, `COLORS.feed` (amber) fill
   - Each has a play ▶ or stop ■ icon depending on whether that side is currently running
   - Starting one side auto-pauses the other (existing `TrackerContext` behavior, unchanged)
@@ -120,23 +120,57 @@
   - "Started at" row for retroactive correction (same datetimepicker pattern)
   - **"Manual entry"** text link below the buttons — opens a sub-sheet where the user can type a total duration in MM:SS format; for sessions logged after the fact (e.g., a night feed recalled in the morning)
   - "Save Session" button appears once any time > 0 has accumulated on either side; disabled + grayed out until then
-- [ ] **Bottle tab:**
+- [x] **Bottle tab:**
   - "Started at" row (retroactive time edit)
   - **Slider** (0–300ml, step 5ml) with a floating live-value badge above the thumb showing e.g. "120 ml"
   - **Outlined pill unit toggle**: `ml` | `oz` — reads from `SettingsContext.units`; stores as ml internally, displays per preference; toggle updates SettingsContext immediately
   - Optional **feed type row**: Formula | Breast milk | Donor milk — three outlined pill buttons; selection stored in `feedType` column (already exists in schema)
   - "Save" full-width button at bottom
-- [ ] The breast feed card on the dashboard retains its LEFT / RIGHT buttons for direct quick-tap access (they now open `FeedModal` pre-set to the Nursing tab with that side already running)
-- [ ] Remove `src/modals/BottleLogModal.tsx` once `FeedModal` covers all its functionality
+- [x] The breast feed card on the dashboard retains its LEFT / RIGHT buttons for direct quick-tap access (they now open `FeedModal` pre-set to the Nursing tab with that side already running)
+- [x] Remove `src/modals/BottleLogModal.tsx` once `FeedModal` covers all its functionality
 
 ### Done when
-- Nursing and Bottle are both accessible from one modal via tabs
-- Nursing: L/R buttons work, dashed ring animates, save appears after time accrues
-- Bottle: slider works without opening the keyboard, oz/ml toggle works
-- Manual entry link opens a simple duration input
-- Retroactive start time works on both tabs
-- Old `BottleLogModal` is deleted with no remaining references
+- Nursing and Bottle are both accessible from one modal via tabs ✓
+- Nursing: L/R buttons work, dashed ring animates, save appears after time accrues ✓
+- Bottle: slider works without opening the keyboard, oz/ml toggle works ✓
+- Manual entry link opens a simple duration input ✓
+- Retroactive start time works on both tabs ✓
+- Old `BottleLogModal` is deleted with no remaining references ✓
+- Zero TypeScript errors ✓
+
+---
+
+## Phase 2b — Visual Card Redesign
+**Scope:** Deeper aesthetic overhaul of all four tracking cards and the dashboard header.
+
+### Deliverables
+- [ ] **Double-wrapper card structure** — all 4 cards: outer `TouchableOpacity` (shadow, no overflow),
+      inner `View` (overflow: hidden, borderRadius: 16)
+- [ ] **Colored category header band** on each card — short top bar filled with category color
+      (`COLORS.sleep` / `COLORS.feed` / `COLORS.diaper`); label text white 11px uppercase;
+      bell icon white; live timer badge (white bg, category-colored text) on sleep card only
+- [ ] **White card body** — `COLORS.surface` background below the header band
+- [ ] **Ghost watermark icon on the right** — absolutely positioned in card body, right edge,
+      opacity 0.1; 88px for full-width cards, 60–68px for half-width
+- [ ] **Fix bottle icon** — change from `Ionicons flask-outline` to
+      `MaterialCommunityIcons baby-bottle-outline`
+- [ ] **Drop shadows** on all cards — `shadowOffset: {0, 3}`, `shadowOpacity: 0.09`,
+      `shadowRadius: 10`, `elevation: 4`; no border (shadow provides separation)
+- [ ] **Larger time-since text** — 22px bold on full-width (Sleep, Diaper);
+      16px semibold on half-width (Nursing, Bottle)
+- [ ] **Dashboard card zone** — `backgroundColor: COLORS.background` (not surface)
+      so cards appear elevated against the page
+- [ ] **Header warmth** — `backgroundColor: COLORS.surfaceAlt` (sage tint),
+      subtle bottom shadow
+
+### Done when
+- All four cards display header band + white body + ghost icon right-aligned
+- Flask icon is gone; baby-bottle icon appears on Bottle card
+- Drop shadow visible on cards (test in iOS Simulator)
+- timeSince values are noticeably larger on Sleep and Diaper cards
+- Dashboard header has warm sage-tinted background
 - Zero TypeScript errors
+- Light and dark themes both render correctly
 
 ---
 
@@ -203,10 +237,13 @@ Phase 0 (Theme)
 Phase 1 (Dashboard Cards)   ← useTheme() must exist
     │
     ├─▶ Phase 2 (Sleep Active State)   ← card layout must exist
+    │       │
+    │       ▼
+    │   Phase 2b (Visual Card Redesign) ← card structure must exist
     │
-    ├─▶ Phase 3 (DiaperModal)          ← card tap-to-open must exist
+    ├─▶ Phase 3 (DiaperModal)  ✓ done  ← card tap-to-open must exist
     │
-    ├─▶ Phase 4 (FeedModal)            ← card tap-to-open must exist
+    ├─▶ Phase 4 (FeedModal)    ✓ done  ← card tap-to-open must exist
     │
     ▼
 Phase 5 (Settings)          ← SettingsContext additions affect Phases 2–4
@@ -216,6 +253,7 @@ Phase 6 (Polish)            ← all above must be complete
 ```
 
 Phases 2, 3, and 4 can be worked in parallel once Phase 1 is done — they don't depend on each other.
+Phase 2b can be worked alongside or after Phase 2 — it deepens the card aesthetics without affecting behavior.
 
 ---
 
