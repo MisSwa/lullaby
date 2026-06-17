@@ -47,7 +47,7 @@ The following packages are approved. Do not add any package not on this list wit
 | `@expo/vector-icons` | Icon sets (Ionicons, MaterialCommunityIcons) for UI icons and card watermarks |
 | `@react-native-community/datetimepicker` | Native date/time picker for retroactive session time correction in modals |
 | `@react-native-community/slider` | Native slider for bottle amount input (0–300 ml, step 5) |
-| `react-native-reanimated` | Spring animations for card press feedback (scale 0.97 on press) |
+| `react-native-reanimated` | Installed (SDK 56 compatible) but not used directly — card press animations use React Native's built-in `Animated` API (`Animated.spring` with `useNativeDriver: true`) to remain compatible with Expo Go |
 | React Native core | `AppState`, `TouchableOpacity`, `StyleSheet`, etc. |
 
 **Forbidden categories:** HTTP clients, analytics SDKs, crash reporting SDKs, UI component libraries, date formatting libraries (use `Intl.DateTimeFormat` or native `.toLocaleTimeString()`). Note: `@expo/vector-icons` is explicitly approved as an **icon library** and is not considered a UI component library under this rule.

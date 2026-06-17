@@ -1,7 +1,6 @@
-import React, { useMemo, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo, useEffect, useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '@hooks/useTheme';
 import { TYPOGRAPHY } from '@theme/colors';
 import { timeSince } from '../../utils/timeSince';
@@ -22,13 +21,12 @@ export const SolidsCard: React.FC<SolidsCardProps> = ({ lastLog, onPress, onLong
     return () => clearInterval(interval);
   }, []);
 
-  const scale = useSharedValue(1);
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const scale = useRef(new Animated.Value(1)).current;
   const onPressIn = (): void => {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, damping: 15, stiffness: 300 }).start();
   };
   const onPressOut = (): void => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, damping: 15, stiffness: 300 }).start();
   };
 
   const styles = useMemo(
@@ -94,7 +92,7 @@ export const SolidsCard: React.FC<SolidsCardProps> = ({ lastLog, onPress, onLong
   const detailStr = lastLog ? (lastLog.notes.length > 0 ? lastLog.notes : 'logged') : '–';
 
   return (
-    <Animated.View style={animStyle}>
+    <Animated.View style={{ transform: [{ scale }] }}>
       <TouchableOpacity
         style={styles.shadowWrapper}
         onPress={onPress}
