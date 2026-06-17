@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Modal,
   SafeAreaView,
@@ -12,8 +12,9 @@ import {
   Platform,
 } from 'react-native';
 import { useSettings } from '@context/SettingsContext';
+import { useTheme } from '@hooks/useTheme';
+import { TYPOGRAPHY } from '@theme/colors';
 import { NotificationType } from '../types/tracker';
-import { COLORS, TYPOGRAPHY } from '@theme/colors';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -26,6 +27,60 @@ interface NotifSectionProps {
 }
 
 const NotifSection: React.FC<NotifSectionProps> = ({ label, type }) => {
+  const COLORS = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        section: {
+          backgroundColor: COLORS.surface,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          marginBottom: 12,
+          paddingHorizontal: 16,
+          paddingVertical: 4,
+        },
+        sectionHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          minHeight: 52,
+        },
+        sectionLabel: {
+          fontSize: TYPOGRAPHY.size.base,
+          fontWeight: '600',
+          color: COLORS.textPrimary,
+        },
+        thresholdRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingBottom: 14,
+          gap: 8,
+        },
+        thresholdLabel: {
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.textMuted,
+        },
+        thresholdInput: {
+          width: 56,
+          height: 44,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          borderRadius: 8,
+          paddingHorizontal: 10,
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textPrimary,
+          backgroundColor: COLORS.background,
+          textAlign: 'center',
+        },
+        thresholdUnit: {
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.textMuted,
+        },
+      }),
+    [COLORS],
+  );
+
   const { notifications, updateNotificationPref } = useSettings();
   const pref = notifications[type];
 
@@ -79,6 +134,57 @@ const NotifSection: React.FC<NotifSectionProps> = ({ label, type }) => {
 };
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss }) => {
+  const COLORS = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: {
+          flex: 1,
+          backgroundColor: COLORS.background,
+        },
+        titleRow: {
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+          backgroundColor: COLORS.surface,
+        },
+        title: {
+          fontSize: TYPOGRAPHY.size.xl,
+          fontWeight: 'bold',
+          color: COLORS.textPrimary,
+        },
+        scroll: {
+          flex: 1,
+        },
+        scrollContent: {
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+        },
+        footer: {
+          paddingHorizontal: 24,
+          paddingVertical: 16,
+          borderTopWidth: 1,
+          borderTopColor: COLORS.border,
+          backgroundColor: COLORS.surface,
+        },
+        doneButton: {
+          height: 52,
+          borderRadius: 12,
+          backgroundColor: COLORS.primary,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        doneButtonText: {
+          fontSize: TYPOGRAPHY.size.base,
+          fontWeight: 'bold',
+          color: COLORS.surface,
+        },
+      }),
+    [COLORS],
+  );
+
   return (
     <Modal animationType="slide" transparent={false} visible={visible}>
       <SafeAreaView style={styles.root}>
@@ -101,95 +207,3 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ visible, onDismiss
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  titleRow: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  title: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  section: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 52,
-  },
-  sectionLabel: {
-    fontSize: TYPOGRAPHY.size.base,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  thresholdRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: 14,
-    gap: 8,
-  },
-  thresholdLabel: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textMuted,
-  },
-  thresholdInput: {
-    width: 56,
-    height: 44,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textPrimary,
-    backgroundColor: COLORS.background,
-    textAlign: 'center',
-  },
-  thresholdUnit: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textMuted,
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  doneButton: {
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  doneButtonText: {
-    fontSize: TYPOGRAPHY.size.base,
-    fontWeight: 'bold',
-    color: COLORS.surface,
-  },
-});

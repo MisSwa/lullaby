@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Modal,
   View,
@@ -9,8 +9,9 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
+import { useTheme } from '@hooks/useTheme';
+import { TYPOGRAPHY } from '@theme/colors';
 import { BabyFormModal } from './BabyFormModal';
-import { COLORS, TYPOGRAPHY } from '@theme/colors';
 
 interface AddBabyModalProps {
   visible: boolean;
@@ -18,6 +19,32 @@ interface AddBabyModalProps {
 }
 
 export const AddBabyModal: React.FC<AddBabyModalProps> = ({ visible, onDismiss }) => {
+  const COLORS = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: {
+          flex: 1,
+          backgroundColor: COLORS.background,
+        },
+        flex: {
+          flex: 1,
+        },
+        inner: {
+          flex: 1,
+          paddingTop: 32,
+        },
+        title: {
+          fontSize: TYPOGRAPHY.size.xl,
+          fontWeight: 'bold',
+          color: COLORS.textPrimary,
+          paddingHorizontal: 24,
+          marginBottom: 8,
+        },
+      }),
+    [COLORS],
+  );
+
   const { createBaby } = useTracker();
 
   const handleSave = async (name: string, dob: number): Promise<void> => {
@@ -41,24 +68,3 @@ export const AddBabyModal: React.FC<AddBabyModalProps> = ({ visible, onDismiss }
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  flex: {
-    flex: 1,
-  },
-  inner: {
-    flex: 1,
-    paddingTop: 32,
-  },
-  title: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    paddingHorizontal: 24,
-    marginBottom: 8,
-  },
-});

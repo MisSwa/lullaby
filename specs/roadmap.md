@@ -1,157 +1,248 @@
-# Lullaby — Roadmap
+# Lullaby — UI/UX Upgrade Roadmap
 
-Each phase is a vertical slice: independently buildable, testable, and coherent. Later phases build on earlier ones but never require them to be "refactored first."
-
----
-
-## Phase 0 — Project Skeleton
-
-**Goal:** A running app with the correct folder structure, theme, types, and database wiring. No visible product features yet.
-
-- Initialize Expo project with TypeScript strict mode
-- Create folder structure per `CLAUDE.md` (`src/theme`, `src/types`, `src/services`, `src/context`, `src/hooks`, `src/screens`, `src/modals`)
-- Write `src/theme/colors.ts` — `COLORS` and `TYPOGRAPHY` constants
-- Write `src/types/tracker.ts` — all discriminated union types (`BabyLog`, `SleepLog`, `FeedLog`, `DiaperLog`, `ActiveTrackers`)
-- Write `src/services/db.ts` — `initializeDatabase`, `insertLog`, `fetchLogsForBaby`, `deleteLog`; WAL mode + foreign keys on init
-- Scaffold `TrackerContext` and `SettingsContext` with empty state and no-op actions
-- Wire `App.tsx`: `SQLiteProvider` → `TrackerProvider` → `SettingsProvider` → placeholder `<View>`
-- App launches, database initializes, no crash
-
-**Exit check:** `npx expo start` runs without errors. Database init log appears in console.
+> Implementation order for the 31 v1 action items identified in `HUCKLEBERRY_ANALYSIS.md`.
+> Each phase covers one logical screen area. Phases must be completed in order —
+> later phases depend on earlier ones being done and tested.
+>
+> **Phase granularity rule:** One screen area = one phase. Each phase ships as a
+> discrete, testable unit. Do not start the next phase until the current phase
+> compiles clean, handles its empty/error states, and works after a 10-minute background.
 
 ---
 
-## Phase 1 — Onboarding & Baby Profiles
+## Phase 0 — Theme Foundation
+**Scope:** Infrastructure only. No visible UI change until the consumer components are updated in Phase 1.
 
-**Goal:** A user with no data is guided to create their first baby profile before anything else appears.
+### Deliverables
+- [x] Extend `src/theme/colors.ts` to export `LIGHT` and `DARK` palette objects (both typed with a `ColorPalette` interface)
+- [x] Create `src/hooks/useTheme.ts` — reads `Appearance.getColorScheme()` and returns the matching palette; subscribes to `Appearance.addChangeListener` so the app responds immediately when the OS theme changes
+- [x] Add `theme` to `SettingsContext` as `'system' | 'light' | 'dark'` (default: `'system'`); `useTheme()` respects this override when present
+- [x] Update `src/theme/colors.ts` to add the `surfaceAlt` token to both palettes (used for ghost icon tints on cards)
+- [x] Audit all existing files: replace any hardcoded hex colors with `COLORS.*` references — zero hardcoded colors anywhere
 
-- Build `OnboardingModal` — name input + date of birth picker; visible when `babies` table is empty
-- Build `AddBabyModal` — reuses the same form, triggered from header
-- Implement `createBaby` and `fetchBabies` in `db.ts`; add `babies` CRUD to `TrackerContext`
-- Build header component: app name on the left, baby name dropdown on the right; switches `activeBabyId` in context
-- Dashboard renders the header and an empty action zone; no log list yet
-- `OnboardingModal` is dismissed once the first baby is saved; never shown again
-
-**Exit check:** Fresh install → onboarding modal → enter name + DOB → dashboard header shows baby name → add second baby → dropdown switches between them.
-
----
-
-## Phase 2 — Sleep Tracking
-
-**Goal:** A parent can start and stop a sleep session with one tap and see it in a log list.
-
-- Build the sleep toggle button on the dashboard (full-width, 90px tall)
-- Implement `startSleep` and `stopSleep` in `TrackerContext`; stop saves `SleepLog` to SQLite
-- Implement `useLiveTick` hook — 1-second interval, returns elapsed seconds, cleans up on unmount
-- Display live elapsed time on the sleep button when active
-- Build the today's log list (reverse-chronological `ScrollView`, today's events only for active baby)
-- Render `SleepLog` cards: type label, start time, duration, color strip
-- Implement delete (✕ button on each card → `removeLog`)
-- Implement `AppState` background correction for sleep timer (Unix delta sync on resume)
-
-**Exit check:** Tap sleep → timer counts up → background app for 2 min → return → timer is accurate → tap again → log appears in list with correct duration → delete removes it.
+### Done when
+- `useTheme()` returns the correct palette on both light and dark OS settings ✓
+- No hardcoded hex string remains in any `.ts` or `.tsx` file ✓ (grep confirmed)
+- TypeScript compiles clean, strict mode, zero errors ✓ (`npx tsc --noEmit` clean)
 
 ---
 
-## Phase 3 — Breast Feed Tracking
+## Phase 1 — Dashboard Card Layout
+**Scope:** All visual changes to the tracking cards on the main dashboard. Does not touch modal internals.
 
-**Goal:** A parent can time left and right breast independently, with only one side running at a time, and save the combined session.
+### Deliverables
+- [ ] **Baby avatar circle** in the header — colored circle (~36px) with the baby's initial letter in white; color derived from a deterministic hash of the baby's name (not hardcoded)
+- [ ] **Computed age string** in the header — "Oliver · 4 months" or "Neela · 2 years 3 months" computed from `dob` at render time using `Intl.RelativeTimeFormat` or a small pure helper; updates on every render (no caching needed at this scale)
+- [ ] **Ghost/watermark category icon** on each card — `@expo/vector-icons` Ionicons icon, same hue as the card's category color, 10% opacity, large (~72px), positioned absolutely at the left-center of the card
+- [ ] **"Xh Ym ago" time-since label** on every card — computed from the most recent log of that type in today's log list; shows "–" when no log exists today; refreshes every 60 seconds via a lightweight interval (does not need `useLiveTick` precision)
+- [ ] **Last-logged detail** shown as a second muted line on each card:
+  - Sleep: last duration "slept 2h 14m" or "active" if running
+  - Feed (breast): "L: 8m · R: 12m" from the last session
+  - Feed (bottle): "120ml"
+  - Feed (solids): "logged"
+  - Diaper: last status capitalized ("Wet", "Dirty", "Mixed", "Dry")
+- [ ] **Live timer badge** on the sleep card when active — top-right corner, small pill showing `HH:MM:SS` elapsed, `COLORS.active` background; powered by `useLiveTick`
+- [ ] **Nursing + Bottle as half-width paired cards** — rendered side by side in a row; each is 50% of card row width minus half the gap; same height as a full-width card
+- [ ] **Reminder bell icon** — small Ionicons bell in the top-right corner of cards that have an active notification scheduled; uses a boolean from `SettingsContext` (whether that log type's reminder is enabled)
+- [ ] Both light and dark themes applied across all cards (consume `useTheme()`)
 
-- Add left and right feed buttons to the dashboard (side by side, below sleep button)
-- Implement `toggleBreastFeed(side)` in `TrackerContext` — starting one side auto-pauses the other; accumulates elapsed per side
-- Display live elapsed seconds per side on the respective button while running
-- Show "Save Session" button once either side has accumulated any time
-- `saveBreastFeed` saves a `FeedLog` with `feedType: 'breast'`, `leftDuration`, `rightDuration`
-- Render `FeedLog` (breast) cards in the log list: type, time, L/R durations
-- Implement `AppState` background correction for feed timers (same Unix delta pattern as sleep)
-- Build `NotesModal` — optional text input, shown before save on long-press of "Save Session"
-
-**Exit check:** Toggle left → timer runs → toggle right → left pauses, right runs → background 1 min → return → elapsed is accurate → save → feed card appears with correct L/R times.
-
----
-
-## Phase 4 — Bottle & Solids Logging
-
-**Goal:** Complete the feed tracking surface. A parent can log a bottle with an amount, or solids with a single tap.
-
-- Build `BottleLogModal` — numeric input for ml amount + save button
-- Add bottle and solids tap targets to the dashboard (below breast feed row)
-- `logBottle(amountMl, notes)` saves a `FeedLog` with `feedType: 'bottle'`
-- `logSolids(notes)` saves a `FeedLog` with `feedType: 'solids'`, `amountMl: 0`
-- Render bottle/solids cards in the log list with appropriate labels and amount display
-
-**Exit check:** Tap bottle → modal opens → enter 90ml → save → card shows "FEED · Bottle · 90ml". Tap solids → card appears immediately.
+### Done when
+- All cards show time-since, last-detail, and ghost icon
+- Avatar and age string appear in the header
+- Nursing and Bottle are side-by-side half-width cards
+- Active sleep shows the live badge
+- Light/dark toggle on the OS changes all card colors immediately
+- Zero TypeScript errors
 
 ---
 
-## Phase 5 — Diaper Tracking
+## Phase 2 — Sleep Active State
+**Scope:** The sleep card's expanded/active view. Only changes what happens when sleep is running.
 
-**Goal:** A parent can log a diaper change in one tap.
+### Deliverables
+- [ ] When sleep is active, the sleep card **expands** (or transitions to an expanded layout) showing:
+  - Large `HH : MM : SS` timer display, centered, with unit labels (HOURS / MIN / SEC) in small muted text beneath each
+  - Current elapsed time computed from `sleepStartTimestamp` in `TrackerContext`
+- [ ] **Tappable "Started at HH:MM AM/PM" row** below the timer — tapping opens the `@react-native-community/datetimepicker` in `mode="time"` to allow retroactive correction; on confirm, updates `sleepStartTimestamp` in `TrackerContext` (clamps to max 12h in the past; shows an inline error if out of range)
+- [ ] **Large STOP button** — minimum 80px height, full card width, `COLORS.active` background, dashed outer ring (implemented with a `borderStyle: 'dashed'` wrapper view or a Reanimated animated border)
+- [ ] Smooth **Reanimated expand transition** when sleep starts — the card height animates from normal to expanded; does not jump
+- [ ] When sleep is not active, the card returns to the standard layout from Phase 1
 
-- Add four diaper status buttons inline on the dashboard (wet / dirty / mixed / dry)
-- `logDiaper(status, notes)` saves a `DiaperLog` to SQLite
-- Render `DiaperLog` cards in the log list with status and timestamp
-- Optional: long-press any diaper button opens `NotesModal` before saving
-
-**Exit check:** Tap "wet" → diaper card appears with correct status and time.
-
----
-
-## Phase 6 — Smart Notifications
-
-**Goal:** The app proactively nudges parents when time has elapsed since the last logged event.
-
-- Request notification permission during the `OnboardingModal` flow (not on first feature use)
-- Implement `useNotifications` hook — exposes `scheduleReminder(type, thresholdMinutes)` and `cancelReminder(type)`
-- After every `insertLog`, cancel the existing reminder for that type and schedule a new one
-- Default thresholds: feed → 3 hours, diaper → 4 hours (configurable in settings)
-- Build a minimal settings panel (rendered as a `Modal` from a header icon): toggle notifications on/off per type, adjust threshold
-- Notification body includes the active baby's name when multiple profiles exist
-- Implement `SettingsContext` with persistence (store settings in a `settings` key-value SQLite table)
-
-**Exit check:** Log a feed → wait (or manually set clock) → notification fires with correct baby name and message → log another feed → previous notification is cancelled, new one scheduled.
+### Done when
+- Active sleep shows the large HH:MM:SS breakdown
+- Start time is editable retroactively
+- Stop button is large and obvious
+- Expand/collapse is animated smoothly
+- Backgrounding the app for 10 minutes and resuming shows the correct elapsed time
+- Zero TypeScript errors
 
 ---
 
-## Phase 7 — Automatic Backup
+## Phase 3 — DiaperModal
+**Scope:** Replace the four inline diaper status buttons on the dashboard card with a proper modal.
 
-**Goal:** User data is silently backed up to cloud storage every time the app is backgrounded.
+### Deliverables
+- [ ] **New file: `src/modals/DiaperModal.tsx`** — a `Modal` component following the same pattern as `BottleLogModal`
+- [ ] The diaper card becomes a **single-tap card** — tapping anywhere on it opens `DiaperModal`; the four inline status buttons are removed from the card
+- [ ] Modal contents:
+  - **"Log Diaper"** header + X close button
+  - **"Started at" row** — shows "Today, HH:MM AM/PM"; tapping opens the datetimepicker to correct retroactively (same 12h clamp rule as Phase 2)
+  - **Four large circle icon buttons** (~100px diameter) in a 2×2 grid or horizontal scroll:
+    - Pee — `Ionicons` droplet icon, `COLORS.diaper` tint
+    - Poo — `Ionicons` cloud / poo icon, `COLORS.diaper` tint
+    - Mixed — two-icon composite or a single combined icon, `COLORS.diaper` tint
+    - Dry — dashed droplet (outline style), `COLORS.diaper` at 50% opacity
+  - Tapping a circle **auto-saves the log and closes the modal** — no separate Save button needed
+  - Each circle has a label below it (Pee / Poo / Mixed / Dry)
+- [ ] Light/dark theming on modal background and button states
 
-- Implement `src/services/backup.ts` — `exportSnapshot()` serializes all `babies` and `baby_logs` rows to JSON
-- On `AppState` transition to `background`, call `exportSnapshot()` and write the file via `expo-file-system`
-- iOS: write to iCloud Documents container (`FileSystem.documentDirectory` with iCloud entitlement)
-- Android: write to app-scoped Google Drive folder (requires one-time OAuth via `expo-auth-session`; defer Android if OAuth setup is complex)
-- File named `lullaby_backup_<YYYY-MM-DD>.json`; overwrite same-day file on each backup
-- Errors are logged to console only — never surface a backup failure to the user
-- No restore UI in this phase
-
-**Exit check:** Use the app → background it → check iCloud/Drive → JSON file exists with correct data.
-
----
-
-## Phase 8 — Polish & Store Submission
-
-**Goal:** The app is ready for a paid public release on both stores.
-
-- App icon and splash screen
-- Review all empty states, error boundaries, and fallback views
-- Audit all touch targets (minimum 44×44pt)
-- Audit all TypeScript — zero errors under `strict: true`
-- Test background/resume timer accuracy across iOS and Android
-- Test with two baby profiles — confirm all logs are correctly scoped
-- Confirm no hardcoded colors (all through `COLORS`)
-- Set up EAS Build for production `.ipa` and `.aab`
-- App Store and Play Store metadata, screenshots, description
-- Submit for review
+### Done when
+- Tapping the diaper card opens the modal
+- Tapping a status icon logs immediately and closes
+- Start time is editable before logging
+- Modal handles the "no baby selected" empty state gracefully
+- Zero TypeScript errors
 
 ---
 
-## What Is Not On This Roadmap (v2 and beyond)
+## Phase 4 — Unified Feed Modal
+**Scope:** Replace `BottleLogModal` and the inline nursing buttons with a single "Add Feeding" modal containing a segmented Nursing / Bottle tab switcher.
 
-- History view with date picker
-- Charts or pattern visualizations
-- Data import / restore from backup file
-- Growth tracking (weight, height)
-- Doctor appointment logging
-- Baby photo / avatar
-- Sharing or exporting individual logs
+### Deliverables
+- [ ] **New file: `src/modals/FeedModal.tsx`** — replaces `BottleLogModal.tsx`; `BottleLogModal.tsx` is deleted
+- [ ] Modal has a **Nursing | Bottle** segmented control at the top (two pill tabs, selected fills with `COLORS.feed`)
+- [ ] **Nursing tab:**
+  - Two large circle buttons (~120px diameter): LEFT and RIGHT, `COLORS.feed` (amber) fill
+  - Each has a play ▶ or stop ■ icon depending on whether that side is currently running
+  - Starting one side auto-pauses the other (existing `TrackerContext` behavior, unchanged)
+  - Dashed outer ring on each button (`borderStyle: 'dashed'`, `borderRadius: 60`, animated via Reanimated when active)
+  - Live elapsed timers displayed below each button (L: 08:32 / R: 04:15) using `useLiveTick`
+  - "Started at" row for retroactive correction (same datetimepicker pattern)
+  - **"Manual entry"** text link below the buttons — opens a sub-sheet where the user can type a total duration in MM:SS format; for sessions logged after the fact (e.g., a night feed recalled in the morning)
+  - "Save Session" button appears once any time > 0 has accumulated on either side; disabled + grayed out until then
+- [ ] **Bottle tab:**
+  - "Started at" row (retroactive time edit)
+  - **Slider** (0–300ml, step 5ml) with a floating live-value badge above the thumb showing e.g. "120 ml"
+  - **Outlined pill unit toggle**: `ml` | `oz` — reads from `SettingsContext.units`; stores as ml internally, displays per preference; toggle updates SettingsContext immediately
+  - Optional **feed type row**: Formula | Breast milk | Donor milk — three outlined pill buttons; selection stored in `feedType` column (already exists in schema)
+  - "Save" full-width button at bottom
+- [ ] The breast feed card on the dashboard retains its LEFT / RIGHT buttons for direct quick-tap access (they now open `FeedModal` pre-set to the Nursing tab with that side already running)
+- [ ] Remove `src/modals/BottleLogModal.tsx` once `FeedModal` covers all its functionality
+
+### Done when
+- Nursing and Bottle are both accessible from one modal via tabs
+- Nursing: L/R buttons work, dashed ring animates, save appears after time accrues
+- Bottle: slider works without opening the keyboard, oz/ml toggle works
+- Manual entry link opens a simple duration input
+- Retroactive start time works on both tabs
+- Old `BottleLogModal` is deleted with no remaining references
+- Zero TypeScript errors
+
+---
+
+## Phase 5 — Settings Screen
+**Scope:** Expand SettingsContext and add a settings modal (or section) with all new preference rows.
+
+### Deliverables
+- [ ] **New file: `src/modals/SettingsModal.tsx`** — triggered from a gear icon in the dashboard header
+- [ ] Settings rows (label-left / value-right underlined style, with dividers between sections):
+  - **Baby list section:**
+    - One row per baby: avatar circle (same as Phase 1 header style) + name + age + "Edit" tap
+    - "Edit" opens `AddBabyModal` pre-populated (edit mode)
+    - **"+ Add Child"** primary-color text button below the list
+  - **Preferences section:**
+    - Theme: Light | System | Dark — three-option segmented control (updates `SettingsContext.theme`, `useTheme()` responds immediately)
+    - Units: ml | oz — two-option segmented control (updates `SettingsContext.units`)
+    - Time format: 12h | 24h — two-option segmented control (updates `SettingsContext.timeFormat`; all timestamp displays in the app respect this)
+  - **Notifications section:**
+    - Feed reminder after: [threshold picker] hours (existing)
+    - Diaper reminder after: [threshold picker] hours (existing)
+    - Sleep reminder after: [threshold picker] hours (existing)
+  - **About section:**
+    - "Your data is stored locally on this device." — static informational row, no chevron
+    - App version (read from `expo-constants` or `package.json` — `Constants.expoConfig?.version`)
+    - Privacy Policy — tappable link (opens a `Linking.openURL` to a static URL)
+- [ ] `SettingsContext` extended with: `theme: 'system' | 'light' | 'dark'`, `units: 'ml' | 'oz'`, `timeFormat: '12h' | '24h'`
+- [ ] All timestamp displays across the app (log list, session summaries) must read `timeFormat` from context
+
+### Done when
+- Theme toggle works live (no restart needed)
+- Units toggle switches bottle display between ml and oz everywhere
+- Time format toggle switches all time displays
+- Baby edit works
+- About section shows real app version
+- Zero TypeScript errors
+
+---
+
+## Phase 6 — UX Micro-Interactions & Polish
+**Scope:** Small behavioral improvements that don't require new screens.
+
+### Deliverables
+- [ ] **Congratulatory nudge bottom sheet** — shown once after the user saves their first log of each type (tracked in `SettingsContext` as `hasSeenNudge: { sleep: boolean, feed: boolean, diaper: boolean }`). Content: "First sleep logged! Set up a reminder so you never miss one." Split-button CTA: "Skip" (outlined) + "Set up" (filled, opens SettingsModal to notifications section). One-time only per type.
+- [ ] **Split-button CTA pattern** — extracted as a reusable `SplitButtonRow` component in `src/components/SplitButtonRow.tsx`: takes `leftLabel`, `rightLabel`, `onLeft`, `onRight` props. Used in the nudge sheet and anywhere else a dismiss/confirm pair is needed (e.g., "Discard session?").
+- [ ] **Computed age string helper** — if not already done in Phase 1, extract to `src/utils/ageString.ts` as a pure function `computeAge(dob: number): string` returning e.g. "4 months" or "2 years 3 months".
+- [ ] **Card press animation** — subtle `scale(0.97)` press feedback on all tracking cards using Reanimated `useSharedValue` + `withSpring`. Communicates that the card is tappable.
+- [ ] **Solids log notes** — if the user holds (long-press) the Solids card, open a minimal `SolidsModal` with a single free-text notes field ("What did they eat?") before saving. Short-tap still logs immediately. This adds food logging without changing the one-tap flow.
+
+### Done when
+- Nudge sheet appears on first log of each type and never again
+- Split button component is reused across at least two places
+- Card press animation feels natural (not over-animated)
+- Solids long-press works without breaking the short-tap behavior
+- Zero TypeScript errors
+
+---
+
+## Phase Dependency Map
+
+```
+Phase 0 (Theme)
+    │
+    ▼
+Phase 1 (Dashboard Cards)   ← useTheme() must exist
+    │
+    ├─▶ Phase 2 (Sleep Active State)   ← card layout must exist
+    │
+    ├─▶ Phase 3 (DiaperModal)          ← card tap-to-open must exist
+    │
+    ├─▶ Phase 4 (FeedModal)            ← card tap-to-open must exist
+    │
+    ▼
+Phase 5 (Settings)          ← SettingsContext additions affect Phases 2–4
+    │
+    ▼
+Phase 6 (Polish)            ← all above must be complete
+```
+
+Phases 2, 3, and 4 can be worked in parallel once Phase 1 is done — they don't depend on each other.
+
+---
+
+## What "Done" Means (Phase-level)
+
+A phase is done when ALL of the following are true:
+
+1. It compiles with zero TypeScript errors under `strict: true`
+2. Every new component handles its empty, loading, and error states explicitly
+3. All time values flow through Unix epoch ms — never strings, never `Date` objects in state or DB
+4. It works correctly after the app is backgrounded for 10 minutes and resumed
+5. It works correctly when a second baby profile exists
+6. Light and dark themes both render correctly
+7. No hardcoded color hex values in any file touched by the phase
+
+---
+
+## Items Not in This Roadmap (Deferred to v2)
+
+These were identified in the Huckleberry analysis but are explicitly deferred:
+
+- History/Reports screen (Day/Week/List/Summary views)
+- Sleep trend charts and wake window analysis
+- Rise and bedtime sparkline charts
+- Age-appropriate sleep tip cards (requires static age-range lookup table)
+- Export data as CSV/JSON from the settings screen
+- "Rate Lullaby" row (expo-store-review)
+- Food name database/search for solids modal
+- Contextual quick-action suggestion chips above the log list
+- Baby profile photo/avatar (photo, not initial circle)

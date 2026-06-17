@@ -1,34 +1,102 @@
-# Lullaby — Mission
+# Lullaby — UI/UX Improvement Mission
 
-## The Problem
+> This document defines the north star for Lullaby's v1 UI/UX upgrade pass.
+> It supplements `CLAUDE.md` and must not contradict it.
+> In any conflict, `CLAUDE.md` wins.
 
-New parents face three compounding problems simultaneously:
+---
 
-**1. Cognitive load at 3am**
-Sleep deprivation is a physiological state, not an excuse. When a parent wakes at 3am to feed or change their baby, they are operating at severely reduced mental capacity. Every second spent navigating a cluttered UI, loading a paywall, or figuring out where to tap is a second of unnecessary friction — at the worst possible time. Tracking should require almost zero thought.
+## Why This Pass Exists
 
-**2. The paper-and-notes-app chaos**
-Most parents default to tracking feeds and diapers in Apple Notes, a physical notebook, or a whiteboard. These are unstructured, unsearchable, and lost the moment the notebook fills up. There is no summary, no elapsed time since the last feed, no way to know at a glance how long the baby slept last night.
+After analyzing 38 screenshots of Huckleberry — the market leader in baby tracking — a clear picture emerged: Huckleberry has strong interaction patterns but ships with significant friction (premium upsells, mandatory modals, dark-only UI, account requirements, cluttered cards). Lullaby can do everything Huckleberry does for daily tracking and do it better on every dimension that matters to a sleep-deprived parent.
 
-**3. The gap in the premium market**
-The existing apps are either free with ads and aggressive upsells, or they charge a monthly subscription that feels punishing for a tool you use intensively for 6-12 months and then retire. There is no well-designed, one-time purchase tracker that respects the user's intelligence and time.
+---
 
-## The Mission
+## The Three-Axis Competitive Edge
 
-Lullaby is a **premium, one-time purchase baby tracker** that solves all three problems at once:
+Lullaby must be measurably better than Huckleberry on all three of these axes simultaneously. No tradeoffs between them.
 
-- **Zero friction logging.** Every core action — starting a sleep session, logging a diaper, toggling a feed timer — is reachable with a single tap from the moment the app opens. No menus. No loading screens. No ads.
-- **Structured, persistent clarity.** Every log is timestamped, stored locally on-device, and immediately visible in a clean reverse-chronological feed. Parents always know: when did the baby last eat? How long did they sleep? How long ago was the last diaper change?
-- **Honest pricing.** $5.00. Once. No subscription. No freemium gating. No data harvesting.
+---
 
-## Who It's For
+### Axis 1 — Speed & Frictionlessness
 
-New parents with infants (0–12 months), typically:
-- Tracking feeds, sleep, and diapers multiple times per day
-- Often operating one-handed (holding the baby with the other arm)
-- Sleep-deprived — UI complexity has a higher cost than normal
-- Willing to pay a small amount upfront for a tool that works without friction
+**What this means:**
+Every core log action (sleep toggle, diaper, bottle, feed) must be reachable in **one tap from the dashboard**. Modals exist only when genuinely needed (bottle amount, nursing session save). They must never appear for simple categorical choices.
 
-## What It Is Not
+**Where Huckleberry falls short:**
+- Diaper requires opening a full modal and tapping a status.
+- All feeds require navigating to a "Add feeding" modal first.
+- The dashboard shows status but doesn't act — you must hunt for buttons.
 
-Lullaby is not a medical device. It does not offer health advice, pattern analysis, or predictions. It records what happened, accurately and permanently, so parents have a clear record. Nothing more.
+**Lullaby's rule:**
+- Sleep: one tap to start, one tap to stop. Nothing else.
+- Diaper: one tap opens a compact sheet, one tap on the status logs and closes. Done in 2 taps total.
+- Breast feed: LEFT / RIGHT buttons are always visible on the card, no modal to open.
+- Bottle: one tap opens a focused amount picker. Slider replaces keyboard. Save in 2 taps.
+- Solids: one tap, done.
+
+**The test:** A parent holding a baby in their non-dominant arm must be able to complete any common log in under 3 seconds without reading anything.
+
+---
+
+### Axis 2 — Privacy as a Feature, Not a Footnote
+
+**What this means:**
+Lullaby's "no accounts, no cloud, no subscriptions" stance is a premium selling point — not a limitation. Every design decision should reinforce the message: *your data lives on your phone, forever, quietly.*
+
+**Where Huckleberry falls short:**
+- Premium upsell banners appear on every screen.
+- Account sign-in is required before you can do anything.
+- In-app inbox, AI logging, and team collaboration push a server-dependency narrative.
+
+**Lullaby's rule:**
+- Zero upsell banners anywhere.
+- Zero account prompts anywhere.
+- The backup happens silently. Users are never interrupted or asked for cloud permissions after the one-time Android Drive grant.
+- Settings shows "Your data is stored locally on this device" as a static informational row — visible, calm, non-defensive.
+- The onboarding screen explicitly states the privacy stance as a feature in one sentence.
+
+---
+
+### Axis 3 — Calm, Adaptive Aesthetic
+
+**What this means:**
+Lullaby's visual design should feel like it belongs in a well-designed nursery — warm, deliberate, never clinical. Huckleberry is all neon cyan on near-black. Lullaby is sage green and warm slate, available in both light and dark.
+
+**Theme strategy:**
+- Ship with **both light and dark themes** from day one, automatically following the device's system setting (`Appearance.getColorScheme()`).
+- No manual toggle needed in Phase 1 — the OS decides. A manual override is a Phase 5 settings option.
+- **Light palette** = current `colors.ts` (sage on off-white) — the "daytime nursery" feel.
+- **Dark palette** = deep slate backgrounds with the same sage/amber/indigo accents, dimmed — the "3am feed" feel. Designed for minimum eye strain.
+
+**Visual hierarchy rules (better than Huckleberry):**
+- Cards use **ghost/watermark category icons** (large, same hue, 12% opacity) so the category is scannable without reading text.
+- Each card shows **time-since-last-log** ("2h 14m ago") in muted text below the category name — always visible, never requires a tap.
+- Last-logged detail shown inline on the card (last diaper status, last bottle amount) — no tapping into history to remember what you just did.
+- The active/running state (sleep timer, breast feed side) uses `COLORS.active` (#10B981 emerald) as a glowing accent — immediately scannable from across the room.
+- Typography scale: category labels are larger and bolder than in v0. Stats (time-since, duration) are smaller and muted. Clear visual hierarchy without noise.
+
+---
+
+## What "Better Than Huckleberry" Looks Like in Practice
+
+| Feature | Huckleberry | Lullaby target |
+|---|---|---|
+| Log a diaper | Open app → tap Diaper card → modal opens → tap status → Save | Tap Diaper card → compact sheet with icon buttons → tap status → auto-close (2 taps) |
+| See last feed | Must remember or open history | Shown inline on the Feed card: "2h 14m ago • 120ml" |
+| Start sleep | Tap Sleep card | Same — already on par |
+| Log bottle | Tap Bottle card → modal → keyboard for amount → Save | Tap Bottle card → modal with slider (no keyboard) → Save (faster input) |
+| Know baby's age | Navigate to Child Profile | Shown in header: "Oliver • 4 months" |
+| Dark mode | Always dark | Follows system (light by day, dark by night) |
+| Upsells seen per session | 3–5 banners | Zero |
+
+---
+
+## Non-Negotiables (unchanged from CLAUDE.md)
+
+- No Huckleberry purple. No purple at all.
+- No cloud accounts or login flows.
+- Single-screen dashboard. No navigation libraries.
+- React Context only. No state management libraries.
+- Unix timestamps everywhere in the database.
+- Strict TypeScript throughout.

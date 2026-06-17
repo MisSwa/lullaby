@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { COLORS, TYPOGRAPHY } from '@theme/colors';
+import { useTheme } from '@hooks/useTheme';
+import { TYPOGRAPHY } from '@theme/colors';
 
 interface BabyFormModalProps {
   mode: 'onboarding' | 'add';
@@ -25,11 +26,93 @@ const threeYearsAgo = () => {
 };
 
 export const BabyFormModal: React.FC<BabyFormModalProps> = ({ mode, onSave, onDismiss }) => {
+  const COLORS = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          width: '100%',
+          paddingHorizontal: 24,
+          paddingTop: 8,
+        },
+        fieldLabel: {
+          fontSize: TYPOGRAPHY.size.sm,
+          fontWeight: '600',
+          color: COLORS.textMuted,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
+          marginBottom: 8,
+          marginTop: 20,
+        },
+        nameInput: {
+          height: 52,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          borderRadius: 12,
+          paddingHorizontal: 16,
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textPrimary,
+          backgroundColor: COLORS.surface,
+        },
+        dateButton: {
+          height: 52,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          borderRadius: 12,
+          paddingHorizontal: 16,
+          justifyContent: 'center',
+          backgroundColor: COLORS.surface,
+        },
+        dateButtonText: {
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textPrimary,
+        },
+        saveButton: {
+          height: 52,
+          borderRadius: 12,
+          backgroundColor: COLORS.primary,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: 32,
+        },
+        saveButtonDisabled: {
+          backgroundColor: COLORS.primaryLight,
+        },
+        saveButtonText: {
+          fontSize: TYPOGRAPHY.size.base,
+          fontWeight: 'bold',
+          color: COLORS.surface,
+        },
+        cancelButton: {
+          height: 44,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: 12,
+        },
+        cancelButtonText: {
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textMuted,
+        },
+      }),
+    [COLORS],
+  );
+
   const [name, setName] = useState('');
   const [dob, setDob] = useState<Date>(yesterday());
   const [saving, setSaving] = useState(false);
   // Android needs explicit show/hide; iOS renders inline always
   const [showPicker, setShowPicker] = useState(Platform.OS === 'ios');
+  const inputRef = useRef<TextInput>(null);
+
+  // autoFocus inside a Modal fires before the animation completes on iOS,
+  // leaving the field unfocused. A short delay ensures the modal is fully
+  // presented before we request focus.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleDateChange = (_event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === 'android') {
@@ -57,12 +140,12 @@ export const BabyFormModal: React.FC<BabyFormModalProps> = ({ mode, onSave, onDi
     <View style={styles.container}>
       <Text style={styles.fieldLabel}>Baby name</Text>
       <TextInput
+        ref={inputRef}
         style={styles.nameInput}
         value={name}
         onChangeText={setName}
         placeholder="Baby name"
         placeholderTextColor={COLORS.textMuted}
-        autoFocus
         maxLength={40}
         returnKeyType="done"
         onSubmitEditing={handleSave}
@@ -110,69 +193,3 @@ export const BabyFormModal: React.FC<BabyFormModalProps> = ({ mode, onSave, onDi
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingHorizontal: 24,
-    paddingTop: 8,
-  },
-  fieldLabel: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: '600',
-    color: COLORS.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    marginTop: 20,
-  },
-  nameInput: {
-    height: 52,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textPrimary,
-    backgroundColor: COLORS.surface,
-  },
-  dateButton: {
-    height: 52,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    backgroundColor: COLORS.surface,
-  },
-  dateButtonText: {
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textPrimary,
-  },
-  saveButton: {
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 32,
-  },
-  saveButtonDisabled: {
-    backgroundColor: COLORS.primaryLight,
-  },
-  saveButtonText: {
-    fontSize: TYPOGRAPHY.size.base,
-    fontWeight: 'bold',
-    color: COLORS.surface,
-  },
-  cancelButton: {
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  cancelButtonText: {
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textMuted,
-  },
-});

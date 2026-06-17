@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { getSetting, setSetting } from '@services/db';
-import { NotificationPref, NotificationSettings, NotificationType } from '../types/tracker';
+import { AppTheme, NotificationPref, NotificationSettings, NotificationType } from '../types/tracker';
 
 const DEFAULTS: NotificationSettings = {
   feed: { enabled: true, thresholdMinutes: 180 },
@@ -9,11 +9,14 @@ const DEFAULTS: NotificationSettings = {
   sleep: { enabled: true, thresholdMinutes: 120 },
 };
 
-const SETTING_KEYS: Record<NotificationType, string> = {
+const NOTIFICATION_KEYS: Record<NotificationType, string> = {
   feed: 'notif_feed',
   diaper: 'notif_diaper',
   sleep: 'notif_sleep',
 };
+
+const THEME_KEY = 'app_theme';
+const VALID_THEMES = new Set<AppTheme>(['system', 'light', 'dark']);
 
 function parsePreference(raw: string | null, fallback: NotificationPref): NotificationPref {
   if (!raw) return fallback;
@@ -38,12 +41,21 @@ function parsePreference(raw: string | null, fallback: NotificationPref): Notifi
   return fallback;
 }
 
+function parseTheme(raw: string | null): AppTheme {
+  if (raw !== null && VALID_THEMES.has(raw as AppTheme)) {
+    return raw as AppTheme;
+  }
+  return 'system';
+}
+
 interface SettingsContextType {
   notifications: NotificationSettings;
   updateNotificationPref: (
     type: NotificationType,
     pref: Partial<NotificationPref>,
   ) => Promise<void>;
+  theme: AppTheme;
+  updateTheme: (t: AppTheme) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -51,6 +63,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const db = useSQLiteContext();
   const [notifications, setNotifications] = useState<NotificationSettings>(DEFAULTS);
+  const [theme, setTheme] = useState<AppTheme>('system');
 
   useEffect(() => {
     (async () => {
@@ -58,12 +71,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const types: NotificationType[] = ['feed', 'diaper', 'sleep'];
         const loaded: NotificationSettings = { ...DEFAULTS };
         for (const type of types) {
-          const raw = await getSetting(db, SETTING_KEYS[type]);
+          const raw = await getSetting(db, NOTIFICATION_KEYS[type]);
           loaded[type] = parsePreference(raw, DEFAULTS[type]);
         }
         setNotifications(loaded);
+
+        const rawTheme = await getSetting(db, THEME_KEY);
+        setTheme(parseTheme(rawTheme));
       } catch (error) {
-        console.error('Failed to load notification settings:', error);
+        console.error('Failed to load settings:', error);
       }
     })();
   }, [db]);
@@ -75,7 +91,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ...prev,
           [type]: { ...prev[type], ...pref },
         };
-        setSetting(db, SETTING_KEYS[type], JSON.stringify(updated[type])).catch(error => {
+        setSetting(db, NOTIFICATION_KEYS[type], JSON.stringify(updated[type])).catch(error => {
           console.error(`Failed to persist ${type} notification pref:`, error);
         });
         return updated;
@@ -84,8 +100,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [db],
   );
 
+  const updateTheme = useCallback(
+    async (t: AppTheme): Promise<void> => {
+      setTheme(t);
+      try {
+        await setSetting(db, THEME_KEY, t);
+      } catch (error) {
+        console.error('Failed to persist theme:', error);
+      }
+    },
+    [db],
+  );
+
   return (
-    <SettingsContext.Provider value={{ notifications, updateNotificationPref }}>
+    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme }}>
       {children}
     </SettingsContext.Provider>
   );

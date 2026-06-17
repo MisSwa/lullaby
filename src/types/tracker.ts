@@ -37,6 +37,10 @@ export interface ActiveTrackers {
   feedRightElapsed: number; // accumulated seconds
 }
 
+// ─── App Settings ────────────────────────────────────────────────────────────
+
+export type AppTheme = 'system' | 'light' | 'dark';
+
 // ─── Notification Settings ───────────────────────────────────────────────────
 
 export type NotificationType = 'feed' | 'diaper' | 'sleep';

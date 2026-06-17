@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Modal,
   SafeAreaView,
@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { COLORS, TYPOGRAPHY } from '@theme/colors';
+import { useTheme } from '@hooks/useTheme';
+import { TYPOGRAPHY } from '@theme/colors';
 
 interface BottleLogModalProps {
   visible: boolean;
@@ -26,6 +27,103 @@ export const BottleLogModal: React.FC<BottleLogModalProps> = ({
   onSave,
   onDismiss,
 }) => {
+  const COLORS = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: {
+          flex: 1,
+          backgroundColor: COLORS.background,
+        },
+        flex: {
+          flex: 1,
+        },
+        inner: {
+          flex: 1,
+          paddingHorizontal: 24,
+          paddingTop: 32,
+        },
+        title: {
+          fontSize: TYPOGRAPHY.size.xl,
+          fontWeight: 'bold',
+          color: COLORS.textPrimary,
+          marginBottom: 6,
+        },
+        subtitle: {
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textMuted,
+          marginBottom: 28,
+        },
+        inputRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 8,
+        },
+        amountInput: {
+          flex: 1,
+          height: 64,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          borderRadius: 12,
+          paddingHorizontal: 16,
+          fontSize: TYPOGRAPHY.size.xl,
+          color: COLORS.textPrimary,
+          backgroundColor: COLORS.surface,
+          marginRight: 12,
+        },
+        amountInputError: {
+          borderColor: COLORS.error,
+        },
+        unit: {
+          fontSize: TYPOGRAPHY.size.xl,
+          fontWeight: 'bold',
+          color: COLORS.textMuted,
+          width: 32,
+        },
+        errorText: {
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.error,
+          marginBottom: 12,
+        },
+        notePreview: {
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.textMuted,
+          fontStyle: 'italic',
+          marginBottom: 20,
+        },
+        saveButton: {
+          height: 52,
+          borderRadius: 12,
+          backgroundColor: COLORS.feed,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginTop: 12,
+          marginBottom: 12,
+        },
+        saveButtonDisabled: {
+          backgroundColor: COLORS.primaryLight,
+        },
+        saveButtonText: {
+          fontSize: TYPOGRAPHY.size.base,
+          fontWeight: 'bold',
+          color: COLORS.surface,
+        },
+        cancelButton: {
+          height: 44,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        cancelButtonText: {
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textMuted,
+        },
+        cancelButtonDisabled: {
+          opacity: 0.4,
+        },
+      }),
+    [COLORS],
+  );
+
   const [amountText, setAmountText] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -114,95 +212,3 @@ export const BottleLogModal: React.FC<BottleLogModalProps> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  flex: {
-    flex: 1,
-  },
-  inner: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-  },
-  title: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textMuted,
-    marginBottom: 28,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  amountInput: {
-    flex: 1,
-    height: 64,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: TYPOGRAPHY.size.xl,
-    color: COLORS.textPrimary,
-    backgroundColor: COLORS.surface,
-    marginRight: 12,
-  },
-  amountInputError: {
-    borderColor: COLORS.error,
-  },
-  unit: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontWeight: 'bold',
-    color: COLORS.textMuted,
-    width: 32,
-  },
-  errorText: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.error,
-    marginBottom: 12,
-  },
-  notePreview: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textMuted,
-    fontStyle: 'italic',
-    marginBottom: 20,
-  },
-  saveButton: {
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: COLORS.feed,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 12,
-    marginBottom: 12,
-  },
-  saveButtonDisabled: {
-    backgroundColor: COLORS.primaryLight,
-  },
-  saveButtonText: {
-    fontSize: TYPOGRAPHY.size.base,
-    fontWeight: 'bold',
-    color: COLORS.surface,
-  },
-  cancelButton: {
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textMuted,
-  },
-  cancelButtonDisabled: {
-    opacity: 0.4,
-  },
-});

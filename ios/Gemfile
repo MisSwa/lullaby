@@ -1,0 +1,4 @@
+source "https://rubygems.org"
+
+gem 'cocoapods', '~> 1.15.2'
+gem 'nkf'  # restores kconv removed from Ruby 3.4+ stdlib

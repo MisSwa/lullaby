@@ -20,7 +20,7 @@ export const BackupManager: React.FC = () => {
   // Android: request Drive access once on first mount
   useEffect(() => {
     if (Platform.OS === 'android') {
-      signIn().catch(error => {
+      signIn().catch((error: unknown) => {
         console.error('BackupManager: Drive sign-in failed on mount:', error);
       });
     }

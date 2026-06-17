@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Modal, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { useTracker } from '@context/TrackerContext';
+import { useTheme } from '@hooks/useTheme';
+import { TYPOGRAPHY } from '@theme/colors';
 import { BabyFormModal } from './BabyFormModal';
-import { COLORS, TYPOGRAPHY } from '@theme/colors';
 
 interface OnboardingModalProps {
   visible: boolean;
@@ -11,6 +12,36 @@ interface OnboardingModalProps {
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({ visible, onComplete }) => {
+  const COLORS = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: {
+          flex: 1,
+          backgroundColor: COLORS.background,
+        },
+        inner: {
+          flex: 1,
+          paddingTop: 80,
+          alignItems: 'center',
+        },
+        appName: {
+          fontSize: TYPOGRAPHY.size.title,
+          fontWeight: 'bold',
+          color: COLORS.primary,
+          marginBottom: 12,
+        },
+        tagline: {
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textMuted,
+          textAlign: 'center',
+          paddingHorizontal: 32,
+          marginBottom: 8,
+        },
+      }),
+    [COLORS],
+  );
+
   const { createBaby } = useTracker();
 
   const handleSave = async (name: string, dob: number): Promise<void> => {
@@ -37,28 +68,3 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ visible, onCom
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  inner: {
-    flex: 1,
-    paddingTop: 80,
-    alignItems: 'center',
-  },
-  appName: {
-    fontSize: TYPOGRAPHY.size.title,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 12,
-  },
-  tagline: {
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    paddingHorizontal: 32,
-    marginBottom: 8,
-  },
-});

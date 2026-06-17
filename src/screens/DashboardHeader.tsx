@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, Pressable, FlatList, StyleSheet } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
+import { useTheme } from '@hooks/useTheme';
+import { TYPOGRAPHY } from '@theme/colors';
 import { Baby } from '../types/baby';
-import { COLORS, TYPOGRAPHY } from '@theme/colors';
 
 interface DashboardHeaderProps {
   onAddBaby: () => void;
@@ -10,6 +11,99 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onAddBaby, onSettingsPress }) => {
+  const COLORS = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        header: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 24,
+          paddingVertical: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+          backgroundColor: COLORS.surface,
+        },
+        appName: {
+          fontSize: TYPOGRAPHY.size.lg,
+          fontWeight: 'bold',
+          color: COLORS.primary,
+        },
+        rightControls: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        },
+        switcher: {
+          minHeight: 44,
+          justifyContent: 'center',
+          alignItems: 'flex-end',
+        },
+        switcherText: {
+          fontSize: TYPOGRAPHY.size.sm,
+          fontWeight: '600',
+          color: COLORS.textPrimary,
+        },
+        gearButton: {
+          minWidth: 44,
+          minHeight: 44,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        gearIcon: {
+          fontSize: TYPOGRAPHY.size.lg,
+          color: COLORS.textMuted,
+        },
+        backdrop: {
+          flex: 1,
+          backgroundColor: COLORS.overlay,
+          justifyContent: 'flex-start',
+          alignItems: 'flex-end',
+          paddingTop: 72,
+          paddingRight: 16,
+        },
+        dropdownCard: {
+          backgroundColor: COLORS.surface,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          minWidth: 180,
+          overflow: 'hidden',
+          elevation: 8,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+        },
+        dropdownRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+          minHeight: 44,
+        },
+        dropdownRowText: {
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textPrimary,
+        },
+        checkmark: {
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.primary,
+          fontWeight: 'bold',
+          marginLeft: 12,
+        },
+        addBabyText: {
+          color: COLORS.primary,
+          fontWeight: '600',
+        },
+      }),
+    [COLORS],
+  );
+
   const { babies, activeBabyId, setActiveBabyId } = useTracker();
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -77,91 +171,3 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onAddBaby, onS
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  appName: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  rightControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  switcher: {
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  switcherText: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  gearButton: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gearIcon: {
-    fontSize: TYPOGRAPHY.size.lg,
-    color: COLORS.textMuted,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: COLORS.overlay,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    paddingTop: 72,
-    paddingRight: 16,
-  },
-  dropdownCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    minWidth: 180,
-    overflow: 'hidden',
-    elevation: 8,
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-  },
-  dropdownRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    minHeight: 44,
-  },
-  dropdownRowText: {
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.textPrimary,
-  },
-  checkmark: {
-    fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    marginLeft: 12,
-  },
-  addBabyText: {
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-});
