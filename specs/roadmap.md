@@ -144,33 +144,33 @@
 **Scope:** Deeper aesthetic overhaul of all four tracking cards and the dashboard header.
 
 ### Deliverables
-- [ ] **Double-wrapper card structure** — all 4 cards: outer `TouchableOpacity` (shadow, no overflow),
+- [x] **Double-wrapper card structure** — all 4 cards: outer `TouchableOpacity` (shadow, no overflow),
       inner `View` (overflow: hidden, borderRadius: 16)
-- [ ] **Colored category header band** on each card — short top bar filled with category color
+- [x] **Colored category header band** on each card — short top bar filled with category color
       (`COLORS.sleep` / `COLORS.feed` / `COLORS.diaper`); label text white 11px uppercase;
       bell icon white; live timer badge (white bg, category-colored text) on sleep card only
-- [ ] **White card body** — `COLORS.surface` background below the header band
-- [ ] **Ghost watermark icon on the right** — absolutely positioned in card body, right edge,
+- [x] **White card body** — `COLORS.surface` background below the header band
+- [x] **Ghost watermark icon on the right** — absolutely positioned in card body, right edge,
       opacity 0.1; 88px for full-width cards, 60–68px for half-width
-- [ ] **Fix bottle icon** — change from `Ionicons flask-outline` to
+- [x] **Fix bottle icon** — change from `Ionicons flask-outline` to
       `MaterialCommunityIcons baby-bottle-outline`
-- [ ] **Drop shadows** on all cards — `shadowOffset: {0, 3}`, `shadowOpacity: 0.09`,
+- [x] **Drop shadows** on all cards — `shadowOffset: {0, 3}`, `shadowOpacity: 0.09`,
       `shadowRadius: 10`, `elevation: 4`; no border (shadow provides separation)
-- [ ] **Larger time-since text** — 22px bold on full-width (Sleep, Diaper);
+- [x] **Larger time-since text** — 22px bold on full-width (Sleep, Diaper);
       16px semibold on half-width (Nursing, Bottle)
-- [ ] **Dashboard card zone** — `backgroundColor: COLORS.background` (not surface)
+- [x] **Dashboard card zone** — `backgroundColor: COLORS.background` (not surface)
       so cards appear elevated against the page
-- [ ] **Header warmth** — `backgroundColor: COLORS.surfaceAlt` (sage tint),
+- [x] **Header warmth** — `backgroundColor: COLORS.surfaceAlt` (sage tint),
       subtle bottom shadow
 
 ### Done when
-- All four cards display header band + white body + ghost icon right-aligned
-- Flask icon is gone; baby-bottle icon appears on Bottle card
-- Drop shadow visible on cards (test in iOS Simulator)
-- timeSince values are noticeably larger on Sleep and Diaper cards
-- Dashboard header has warm sage-tinted background
-- Zero TypeScript errors
-- Light and dark themes both render correctly
+- All four cards display header band + white body + ghost icon right-aligned ✓
+- Flask icon is gone; baby-bottle icon appears on Bottle card ✓
+- Drop shadow visible on cards (test in iOS Simulator) ✓
+- timeSince values are noticeably larger on Sleep and Diaper cards ✓
+- Dashboard header has warm sage-tinted background ✓
+- Zero TypeScript errors ✓
+- Light and dark themes both render correctly ✓
 
 ---
 
