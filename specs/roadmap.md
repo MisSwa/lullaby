@@ -31,20 +31,20 @@
 **Scope:** All visual changes to the tracking cards on the main dashboard. Does not touch modal internals.
 
 ### Deliverables
-- [ ] **Baby avatar circle** in the header — colored circle (~36px) with the baby's initial letter in white; color derived from a deterministic hash of the baby's name (not hardcoded)
-- [ ] **Computed age string** in the header — "Oliver · 4 months" or "Neela · 2 years 3 months" computed from `dob` at render time using `Intl.RelativeTimeFormat` or a small pure helper; updates on every render (no caching needed at this scale)
-- [ ] **Ghost/watermark category icon** on each card — `@expo/vector-icons` Ionicons icon, same hue as the card's category color, 10% opacity, large (~72px), positioned absolutely at the left-center of the card
-- [ ] **"Xh Ym ago" time-since label** on every card — computed from the most recent log of that type in today's log list; shows "–" when no log exists today; refreshes every 60 seconds via a lightweight interval (does not need `useLiveTick` precision)
-- [ ] **Last-logged detail** shown as a second muted line on each card:
+- [x] **Baby avatar circle** in the header — colored circle (~36px) with the baby's initial letter in white; color derived from a deterministic hash of the baby's name (not hardcoded)
+- [x] **Computed age string** in the header — "Oliver · 4 months" or "Neela · 2 years 3 months" computed from `dob` at render time using `Intl.RelativeTimeFormat` or a small pure helper; updates on every render (no caching needed at this scale)
+- [x] **Ghost/watermark category icon** on each card — `@expo/vector-icons` Ionicons icon, same hue as the card's category color, 10% opacity, large (~72px), positioned absolutely at the left-center of the card
+- [x] **"Xh Ym ago" time-since label** on every card — computed from the most recent log of that type in today's log list; shows "–" when no log exists today; refreshes every 60 seconds via a lightweight interval (does not need `useLiveTick` precision)
+- [x] **Last-logged detail** shown as a second muted line on each card:
   - Sleep: last duration "slept 2h 14m" or "active" if running
   - Feed (breast): "L: 8m · R: 12m" from the last session
   - Feed (bottle): "120ml"
   - Feed (solids): "logged"
   - Diaper: last status capitalized ("Wet", "Dirty", "Mixed", "Dry")
-- [ ] **Live timer badge** on the sleep card when active — top-right corner, small pill showing `HH:MM:SS` elapsed, `COLORS.active` background; powered by `useLiveTick`
-- [ ] **Nursing + Bottle as half-width paired cards** — rendered side by side in a row; each is 50% of card row width minus half the gap; same height as a full-width card
-- [ ] **Reminder bell icon** — small Ionicons bell in the top-right corner of cards that have an active notification scheduled; uses a boolean from `SettingsContext` (whether that log type's reminder is enabled)
-- [ ] Both light and dark themes applied across all cards (consume `useTheme()`)
+- [x] **Live timer badge** on the sleep card when active — top-right corner, small pill showing `HH:MM:SS` elapsed, `COLORS.active` background; powered by `useLiveTick`
+- [x] **Nursing + Bottle as half-width paired cards** — rendered side by side in a row; each is 50% of card row width minus half the gap; same height as a full-width card
+- [x] **Reminder bell icon** — small Ionicons bell in the top-right corner of cards that have an active notification scheduled; uses a boolean from `SettingsContext` (whether that log type's reminder is enabled)
+- [x] Both light and dark themes applied across all cards (consume `useTheme()`)
 
 ### Done when
 - All cards show time-since, last-detail, and ghost icon

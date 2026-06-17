@@ -2,8 +2,27 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, Pressable, FlatList, StyleSheet } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
 import { useTheme } from '@hooks/useTheme';
-import { TYPOGRAPHY } from '@theme/colors';
+import { LIGHT, TYPOGRAPHY } from '@theme/colors';
+import { computeAge } from '../utils/ageString';
 import { Baby } from '../types/baby';
+
+// Deterministic avatar color — draws from the light palette tokens to avoid hardcoded hex
+const AVATAR_PALETTE = [
+  LIGHT.primary,
+  LIGHT.sleep,
+  LIGHT.feed,
+  LIGHT.diaper,
+  LIGHT.active,
+  LIGHT.textMuted,
+];
+
+function avatarColor(name: string): string {
+  let sum = 0;
+  for (let i = 0; i < name.length; i++) {
+    sum += name.charCodeAt(i);
+  }
+  return AVATAR_PALETTE[sum % AVATAR_PALETTE.length];
+}
 
 interface DashboardHeaderProps {
   onAddBaby: () => void;
@@ -29,6 +48,35 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onAddBaby, onS
           fontSize: TYPOGRAPHY.size.lg,
           fontWeight: 'bold',
           color: COLORS.primary,
+        },
+        babyRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+        },
+        avatar: {
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        avatarText: {
+          fontSize: TYPOGRAPHY.size.base,
+          fontWeight: 'bold',
+          color: COLORS.surface,
+        },
+        babyInfo: {
+          alignItems: 'flex-start',
+        },
+        babyName: {
+          fontSize: TYPOGRAPHY.size.sm,
+          fontWeight: '600',
+          color: COLORS.textPrimary,
+        },
+        babyAge: {
+          fontSize: TYPOGRAPHY.size.xs,
+          color: COLORS.textMuted,
         },
         rightControls: {
           flexDirection: 'row',
@@ -122,7 +170,19 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onAddBaby, onS
 
   return (
     <View style={styles.header}>
-      <Text style={styles.appName}>Lullaby</Text>
+      {activeBaby ? (
+        <View style={styles.babyRow}>
+          <View style={[styles.avatar, { backgroundColor: avatarColor(activeBaby.name) }]}>
+            <Text style={styles.avatarText}>{activeBaby.name.charAt(0).toUpperCase()}</Text>
+          </View>
+          <View style={styles.babyInfo}>
+            <Text style={styles.babyName}>{activeBaby.name}</Text>
+            <Text style={styles.babyAge}>{computeAge(activeBaby.dob)}</Text>
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.appName}>Lullaby</Text>
+      )}
 
       <View style={styles.rightControls}>
         <TouchableOpacity

@@ -40,6 +40,7 @@ export interface ActiveTrackers {
 // ─── App Settings ────────────────────────────────────────────────────────────
 
 export type AppTheme = 'system' | 'light' | 'dark';
+export type AppUnits = 'ml' | 'oz';
 
 // ─── Notification Settings ───────────────────────────────────────────────────
 

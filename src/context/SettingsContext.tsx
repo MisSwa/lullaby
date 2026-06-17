@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { getSetting, setSetting } from '@services/db';
-import { AppTheme, NotificationPref, NotificationSettings, NotificationType } from '../types/tracker';
+import { AppTheme, AppUnits, NotificationPref, NotificationSettings, NotificationType } from '../types/tracker';
 
 const DEFAULTS: NotificationSettings = {
   feed: { enabled: true, thresholdMinutes: 180 },
@@ -16,7 +16,9 @@ const NOTIFICATION_KEYS: Record<NotificationType, string> = {
 };
 
 const THEME_KEY = 'app_theme';
+const UNITS_KEY = 'app_units';
 const VALID_THEMES = new Set<AppTheme>(['system', 'light', 'dark']);
+const VALID_UNITS = new Set<AppUnits>(['ml', 'oz']);
 
 function parsePreference(raw: string | null, fallback: NotificationPref): NotificationPref {
   if (!raw) return fallback;
@@ -48,6 +50,13 @@ function parseTheme(raw: string | null): AppTheme {
   return 'system';
 }
 
+function parseUnits(raw: string | null): AppUnits {
+  if (raw !== null && VALID_UNITS.has(raw as AppUnits)) {
+    return raw as AppUnits;
+  }
+  return 'ml';
+}
+
 interface SettingsContextType {
   notifications: NotificationSettings;
   updateNotificationPref: (
@@ -56,6 +65,8 @@ interface SettingsContextType {
   ) => Promise<void>;
   theme: AppTheme;
   updateTheme: (t: AppTheme) => Promise<void>;
+  units: AppUnits;
+  updateUnits: (u: AppUnits) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -64,6 +75,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const db = useSQLiteContext();
   const [notifications, setNotifications] = useState<NotificationSettings>(DEFAULTS);
   const [theme, setTheme] = useState<AppTheme>('system');
+  const [units, setUnits] = useState<AppUnits>('ml');
 
   useEffect(() => {
     (async () => {
@@ -78,6 +90,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         const rawTheme = await getSetting(db, THEME_KEY);
         setTheme(parseTheme(rawTheme));
+
+        const rawUnits = await getSetting(db, UNITS_KEY);
+        setUnits(parseUnits(rawUnits));
       } catch (error) {
         console.error('Failed to load settings:', error);
       }
@@ -112,8 +127,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [db],
   );
 
+  const updateUnits = useCallback(
+    async (u: AppUnits): Promise<void> => {
+      setUnits(u);
+      try {
+        await setSetting(db, UNITS_KEY, u);
+      } catch (error) {
+        console.error('Failed to persist units:', error);
+      }
+    },
+    [db],
+  );
+
   return (
-    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme }}>
+    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme, units, updateUnits }}>
       {children}
     </SettingsContext.Provider>
   );

@@ -27,7 +27,7 @@ interface TrackerContextType {
   saveBreastFeed: (notes?: string) => Promise<void>;
   logBottle: (amountMl: number, notes?: string) => Promise<void>;
   logSolids: (notes?: string) => Promise<void>;
-  logDiaper: (status: 'wet' | 'dirty' | 'mixed' | 'dry', notes?: string) => Promise<void>;
+  logDiaper: (status: 'wet' | 'dirty' | 'mixed' | 'dry', notes?: string, timestamp?: number) => Promise<void>;
   removeLog: (id: string) => Promise<void>;
   createBaby: (name: string, dob: number) => Promise<void>;
 }
@@ -315,14 +315,14 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // ─── Diaper ──────────────────────────────────────────────────────────────────
 
-  const logDiaper = async (status: DiaperLog['status'], notes?: string): Promise<void> => {
+  const logDiaper = async (status: DiaperLog['status'], notes?: string, timestamp?: number): Promise<void> => {
     if (!activeBabyId) return;
     const log: DiaperLog = {
       id: Crypto.randomUUID(),
       babyId: activeBabyId,
       type: 'diaper',
       status,
-      timestamp: Date.now(),
+      timestamp: timestamp ?? Date.now(),
       notes: notes ?? '',
     };
     try {

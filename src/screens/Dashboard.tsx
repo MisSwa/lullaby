@@ -1,26 +1,30 @@
 import React, { useMemo, useState } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
-import { useLiveTick } from '@hooks/useLiveTick';
 import { useTheme } from '@hooks/useTheme';
+import { TYPOGRAPHY } from '@theme/colors';
 import { BabyLog, DiaperLog, FeedLog, SleepLog } from '../types/tracker';
-import { ColorPalette, TYPOGRAPHY } from '@theme/colors';
 import { DashboardHeader } from './DashboardHeader';
 import { AddBabyModal } from '@modals/AddBabyModal';
-import { BottleLogModal } from '@modals/BottleLogModal';
 import { NotesModal } from '@modals/NotesModal';
 import { SettingsModal } from '@modals/SettingsModal';
+import { DiaperModal } from '@modals/DiaperModal';
+import { FeedModal } from '@modals/FeedModal';
+import { SleepCard } from '../components/cards/SleepCard';
+import { NursingCard } from '../components/cards/NursingCard';
+import { BottleCard } from '../components/cards/BottleCard';
+import { DiaperCard } from '../components/cards/DiaperCard';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+function formatTime(ts: number): string {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
 function formatElapsed(secs: number): string {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
-function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatFeedElapsed(secs: number): string {
@@ -29,18 +33,11 @@ function formatFeedElapsed(secs: number): string {
   return `${m}m ${s}s`;
 }
 
-function formatAmount(ml: number): string {
-  return ml % 1 === 0 ? `${Math.round(ml)}ml` : `${ml.toFixed(1)}ml`;
-}
-
-function colorForLog(log: BabyLog, colors: ColorPalette): string {
+function colorForLog(log: BabyLog, colors: ReturnType<typeof useTheme>): string {
   switch (log.type) {
-    case 'sleep':
-      return colors.sleep;
-    case 'feed':
-      return colors.feed;
-    case 'diaper':
-      return colors.diaper;
+    case 'sleep': return colors.sleep;
+    case 'feed': return colors.feed;
+    case 'diaper': return colors.diaper;
     default: {
       const _exhaustive: never = log;
       throw new Error(`Unhandled log type: ${JSON.stringify(_exhaustive)}`);
@@ -50,18 +47,16 @@ function colorForLog(log: BabyLog, colors: ColorPalette): string {
 
 function labelForLog(log: BabyLog): string {
   switch (log.type) {
-    case 'sleep':
-      return 'SLEEP';
+    case 'sleep': return 'SLEEP';
     case 'feed': {
-      const feedLog = log as FeedLog;
-      if (feedLog.feedType === 'breast') return 'FEED · Breast';
-      if (feedLog.feedType === 'bottle') return 'FEED · Bottle';
+      const f = log as FeedLog;
+      if (f.feedType === 'breast') return 'FEED · Breast';
+      if (f.feedType === 'bottle') return 'FEED · Bottle';
       return 'FEED · Solids';
     }
     case 'diaper': {
-      const diaperLog = log as DiaperLog;
-      const status = diaperLog.status;
-      return `DIAPER · ${status.charAt(0).toUpperCase()}${status.slice(1)}`;
+      const d = log as DiaperLog;
+      return `DIAPER · ${d.status.charAt(0).toUpperCase()}${d.status.slice(1)}`;
     }
     default: {
       const _exhaustive: never = log;
@@ -72,22 +67,19 @@ function labelForLog(log: BabyLog): string {
 
 function durationForLog(log: BabyLog): string {
   if (log.type === 'sleep') {
-    const sleepLog = log as SleepLog;
-    if (!sleepLog.endTime) return 'In progress';
-    const secs = Math.floor((sleepLog.endTime - sleepLog.timestamp) / 1000);
-    return formatElapsed(secs);
+    const s = log as SleepLog;
+    if (!s.endTime) return 'In progress';
+    return formatElapsed(Math.floor((s.endTime - s.timestamp) / 1000));
   }
   if (log.type === 'feed') {
-    const feedLog = log as FeedLog;
-    if (feedLog.feedType === 'breast') {
+    const f = log as FeedLog;
+    if (f.feedType === 'breast') {
       const parts: string[] = [];
-      if (feedLog.leftDuration > 0) parts.push(`L ${formatFeedElapsed(feedLog.leftDuration)}`);
-      if (feedLog.rightDuration > 0) parts.push(`R ${formatFeedElapsed(feedLog.rightDuration)}`);
+      if (f.leftDuration > 0) parts.push(`L ${formatFeedElapsed(f.leftDuration)}`);
+      if (f.rightDuration > 0) parts.push(`R ${formatFeedElapsed(f.rightDuration)}`);
       return parts.join(' · ');
     }
-    if (feedLog.feedType === 'bottle') {
-      return formatAmount(feedLog.amountMl);
-    }
+    if (f.feedType === 'bottle') return `${f.amountMl}ml`;
     return '';
   }
   return '';
@@ -115,32 +107,16 @@ const LogCard: React.FC<LogCardProps> = ({ log, onDelete }) => {
           overflow: 'hidden',
           minHeight: 64,
         },
-        cardStrip: {
-          width: 6,
-        },
-        cardBody: {
-          flex: 1,
-          paddingHorizontal: 14,
-          paddingVertical: 12,
-        },
+        cardStrip: { width: 6 },
+        cardBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 12 },
         cardLabel: {
           fontSize: TYPOGRAPHY.size.sm,
           fontWeight: 'bold',
           color: COLORS.textPrimary,
         },
-        cardTime: {
-          fontSize: TYPOGRAPHY.size.xs,
-          color: COLORS.textMuted,
-          marginTop: 2,
-        },
-        cardDuration: {
-          fontSize: TYPOGRAPHY.size.xs,
-          color: COLORS.textMuted,
-          marginTop: 2,
-        },
-        cardDurationActive: {
-          color: COLORS.active,
-        },
+        cardTime: { fontSize: TYPOGRAPHY.size.xs, color: COLORS.textMuted, marginTop: 2 },
+        cardDuration: { fontSize: TYPOGRAPHY.size.xs, color: COLORS.textMuted, marginTop: 2 },
+        cardDurationActive: { color: COLORS.active },
         cardNotes: {
           fontSize: TYPOGRAPHY.size.sm,
           color: COLORS.textPrimary,
@@ -154,10 +130,7 @@ const LogCard: React.FC<LogCardProps> = ({ log, onDelete }) => {
           borderLeftWidth: 1,
           borderLeftColor: COLORS.border,
         },
-        deleteIcon: {
-          fontSize: TYPOGRAPHY.size.base,
-          color: COLORS.textMuted,
-        },
+        deleteIcon: { fontSize: TYPOGRAPHY.size.base, color: COLORS.textMuted },
       }),
     [COLORS],
   );
@@ -192,36 +165,19 @@ export const Dashboard: React.FC = () => {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        root: {
-          flex: 1,
-          backgroundColor: COLORS.background,
-        },
-        actionZone: {
-          paddingHorizontal: 24,
-          paddingVertical: 20,
+        root: { flex: 1, backgroundColor: COLORS.background },
+        cardZone: {
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 8,
           backgroundColor: COLORS.surface,
           borderBottomWidth: 1,
           borderBottomColor: COLORS.border,
         },
-        sleepButton: {
-          height: 90,
-          borderRadius: 16,
-          backgroundColor: COLORS.sleep,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 2,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-        },
-        sleepButtonActive: {
-          backgroundColor: COLORS.active,
-        },
-        sleepButtonLabel: {
-          fontSize: TYPOGRAPHY.size.lg,
-          fontWeight: 'bold',
-          color: COLORS.surface,
+        feedRow: {
+          flexDirection: 'row',
+          gap: 10,
+          marginBottom: 12,
         },
         sectionLabel: {
           paddingHorizontal: 24,
@@ -233,118 +189,10 @@ export const Dashboard: React.FC = () => {
           textTransform: 'uppercase',
           letterSpacing: 1,
         },
-        list: {
-          flex: 1,
-          paddingHorizontal: 24,
-        },
-        listContent: {
-          paddingBottom: 32,
-        },
-        listEmpty: {
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-        emptyText: {
-          fontSize: TYPOGRAPHY.size.base,
-          color: COLORS.textMuted,
-        },
-        feedRow: {
-          flexDirection: 'row',
-          gap: 10,
-          marginTop: 12,
-        },
-        feedButton: {
-          flex: 1,
-          height: 90,
-          borderRadius: 12,
-          backgroundColor: COLORS.feed,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 2,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-        },
-        feedButtonActive: {
-          backgroundColor: COLORS.active,
-        },
-        feedButtonSide: {
-          fontSize: TYPOGRAPHY.size.lg,
-          fontWeight: 'bold',
-          color: COLORS.surface,
-        },
-        feedButtonElapsed: {
-          fontSize: TYPOGRAPHY.size.xs,
-          color: COLORS.surface,
-          marginTop: 2,
-        },
-        feedSaveButton: {
-          width: 70,
-          height: 90,
-          borderRadius: 12,
-          backgroundColor: COLORS.primary,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 2,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-        },
-        feedSaveButtonText: {
-          fontSize: TYPOGRAPHY.size.sm,
-          fontWeight: 'bold',
-          color: COLORS.surface,
-        },
-        quickFeedRow: {
-          flexDirection: 'row',
-          gap: 10,
-          marginTop: 10,
-        },
-        quickFeedButton: {
-          flex: 1,
-          height: 54,
-          borderRadius: 12,
-          backgroundColor: COLORS.feed,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 2,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-          opacity: 0.85,
-        },
-        quickFeedButtonLabel: {
-          fontSize: TYPOGRAPHY.size.sm,
-          fontWeight: '600',
-          color: COLORS.surface,
-        },
-        diaperRow: {
-          flexDirection: 'row',
-          gap: 8,
-          marginTop: 10,
-        },
-        diaperButton: {
-          flex: 1,
-          height: 48,
-          borderRadius: 12,
-          backgroundColor: COLORS.diaper,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 2,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-        },
-        diaperButtonLabel: {
-          fontSize: TYPOGRAPHY.size.xs,
-          fontWeight: '600',
-          color: COLORS.surface,
-        },
+        list: { flex: 1, paddingHorizontal: 24 },
+        listContent: { paddingBottom: 32 },
+        listEmpty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+        emptyText: { fontSize: TYPOGRAPHY.size.base, color: COLORS.textMuted },
       }),
     [COLORS],
   );
@@ -358,40 +206,31 @@ export const Dashboard: React.FC = () => {
     toggleBreastFeed,
     saveBreastFeed,
     logBottle,
-    logSolids,
     logDiaper,
   } = useTracker();
+
   const [showAddBaby, setShowAddBaby] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
-  const [notesVisible, setNotesVisible] = useState(false);
-  const [feedNotesVisible, setFeedNotesVisible] = useState(false);
-  const [bottleModalVisible, setBottleModalVisible] = useState(false);
-  const [pendingBottleNotes, setPendingBottleNotes] = useState('');
-  const [bottleNotesVisible, setBottleNotesVisible] = useState(false);
-  const [solidsNotesVisible, setSolidsNotesVisible] = useState(false);
-  const [diaperNotesVisible, setDiaperNotesVisible] = useState(false);
-  const [pendingDiaperStatus, setPendingDiaperStatus] = useState<DiaperLog['status'] | null>(null);
-
-  const sleepElapsed = useLiveTick(active.sleepStart);
-  const leftTick = useLiveTick(active.feedLeftStart);
-  const rightTick = useLiveTick(active.feedRightStart);
+  const [sleepNotesVisible, setSleepNotesVisible] = useState(false);
+  const [diaperModalVisible, setDiaperModalVisible] = useState(false);
+  const [feedModalVisible, setFeedModalVisible] = useState(false);
+  const [feedModalTab, setFeedModalTab] = useState<'nursing' | 'bottle'>('nursing');
 
   const isSleeping = active.sleepStart !== null;
-  const totalLeftSecs = active.feedLeftElapsed + leftTick;
-  const totalRightSecs = active.feedRightElapsed + rightTick;
-  const isFeedRunning = active.feedLeftStart !== null || active.feedRightStart !== null;
-  const showFeedSave = (totalLeftSecs > 0 || totalRightSecs > 0) && !isFeedRunning;
 
-  const feedModalElapsed = (() => {
-    const parts: string[] = [];
-    if (active.feedLeftElapsed > 0) parts.push(`L ${formatFeedElapsed(active.feedLeftElapsed)}`);
-    if (active.feedRightElapsed > 0) parts.push(`R ${formatFeedElapsed(active.feedRightElapsed)}`);
-    return parts.join(' · ') || '0m 0s';
-  })();
+  // Derive the most recent log of each type from today's log list
+  const lastSleepLog = (logs.find(l => l.type === 'sleep') ?? null) as SleepLog | null;
+  const lastBreastLog = (logs.find(
+    l => l.type === 'feed' && (l as FeedLog).feedType === 'breast',
+  ) ?? null) as FeedLog | null;
+  const lastBottleLog = (logs.find(
+    l => l.type === 'feed' && (l as FeedLog).feedType === 'bottle',
+  ) ?? null) as FeedLog | null;
+  const lastDiaperLog = (logs.find(l => l.type === 'diaper') ?? null) as DiaperLog | null;
 
-  const handleSleepPress = () => {
+  const handleSleepPress = (): void => {
     if (isSleeping) {
-      setNotesVisible(true);
+      setSleepNotesVisible(true);
     } else {
       startSleep();
     }
@@ -399,62 +238,35 @@ export const Dashboard: React.FC = () => {
 
   const handleSaveNotes = async (notes: string): Promise<void> => {
     await stopSleep(notes);
-    setNotesVisible(false);
+    setSleepNotesVisible(false);
   };
 
-  const handleSaveFeedNotes = async (notes: string): Promise<void> => {
-    await saveBreastFeed(notes);
-    setFeedNotesVisible(false);
-  };
-
-  const handleBottlePress = (): void => {
-    setPendingBottleNotes('');
-    setBottleModalVisible(true);
-  };
-
-  const handleBottleLongPress = (): void => {
-    setBottleNotesVisible(true);
-  };
-
-  const handleBottleNoteSaved = async (notes: string): Promise<void> => {
-    setPendingBottleNotes(notes);
-    setBottleNotesVisible(false);
-    setBottleModalVisible(true);
+  const handleDiaperSave = async (
+    status: DiaperLog['status'],
+    timestamp: number,
+  ): Promise<void> => {
+    await logDiaper(status, undefined, timestamp);
+    setDiaperModalVisible(false);
   };
 
   const handleBottleSave = async (amountMl: number): Promise<void> => {
-    await logBottle(amountMl, pendingBottleNotes || undefined);
-    setBottleModalVisible(false);
-    setPendingBottleNotes('');
+    await logBottle(amountMl);
+    setFeedModalVisible(false);
   };
 
-  const handleSolidsPress = async (): Promise<void> => {
-    await logSolids();
+  const handleNursingSave = async (): Promise<void> => {
+    await saveBreastFeed();
+    setFeedModalVisible(false);
   };
 
-  const handleSolidsLongPress = (): void => {
-    setSolidsNotesVisible(true);
+  const openNursingModal = (): void => {
+    setFeedModalTab('nursing');
+    setFeedModalVisible(true);
   };
 
-  const handleSolidsNoteSaved = async (notes: string): Promise<void> => {
-    await logSolids(notes);
-    setSolidsNotesVisible(false);
-  };
-
-  const handleDiaperPress = async (status: DiaperLog['status']): Promise<void> => {
-    await logDiaper(status);
-  };
-
-  const handleDiaperLongPress = (status: DiaperLog['status']): void => {
-    setPendingDiaperStatus(status);
-    setDiaperNotesVisible(true);
-  };
-
-  const handleDiaperNoteSaved = async (notes: string): Promise<void> => {
-    if (pendingDiaperStatus === null) return;
-    await logDiaper(pendingDiaperStatus, notes);
-    setDiaperNotesVisible(false);
-    setPendingDiaperStatus(null);
+  const openBottleModal = (): void => {
+    setFeedModalTab('bottle');
+    setFeedModalVisible(true);
   };
 
   return (
@@ -464,89 +276,31 @@ export const Dashboard: React.FC = () => {
         onSettingsPress={() => setSettingsVisible(true)}
       />
 
-      {/* Action zone */}
-      <View style={styles.actionZone}>
-        <TouchableOpacity
-          style={[styles.sleepButton, isSleeping && styles.sleepButtonActive]}
+      {/* Tracking cards */}
+      <View style={styles.cardZone}>
+        <SleepCard
+          lastLog={lastSleepLog}
+          sleepStart={active.sleepStart}
           onPress={handleSleepPress}
-        >
-          <Text style={styles.sleepButtonLabel}>
-            {isSleeping ? `Wake Up  ·  ${formatElapsed(sleepElapsed)}` : 'Track Sleep'}
-          </Text>
-        </TouchableOpacity>
+        />
 
-        {/* Feed buttons */}
         <View style={styles.feedRow}>
-          <TouchableOpacity
-            style={[styles.feedButton, active.feedLeftStart !== null && styles.feedButtonActive]}
-            onPress={() => toggleBreastFeed('left')}
-            disabled={isSleeping}
-          >
-            <Text style={styles.feedButtonSide}>L</Text>
-            <Text style={styles.feedButtonElapsed}>{formatFeedElapsed(totalLeftSecs)}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.feedButton, active.feedRightStart !== null && styles.feedButtonActive]}
-            onPress={() => toggleBreastFeed('right')}
-            disabled={isSleeping}
-          >
-            <Text style={styles.feedButtonSide}>R</Text>
-            <Text style={styles.feedButtonElapsed}>{formatFeedElapsed(totalRightSecs)}</Text>
-          </TouchableOpacity>
-
-          {showFeedSave && (
-            <TouchableOpacity
-              style={styles.feedSaveButton}
-              onPress={() => setFeedNotesVisible(true)}
-            >
-              <Text style={styles.feedSaveButtonText}>Save</Text>
-            </TouchableOpacity>
-          )}
+          <NursingCard
+            lastLog={lastBreastLog}
+            feedLeftStart={active.feedLeftStart}
+            feedRightStart={active.feedRightStart}
+            feedLeftElapsed={active.feedLeftElapsed}
+            feedRightElapsed={active.feedRightElapsed}
+            onPress={openNursingModal}
+          />
+          <BottleCard lastLog={lastBottleLog} onPress={openBottleModal} />
         </View>
 
-        {/* Bottle / Solids row */}
-        <View style={styles.quickFeedRow}>
-          <TouchableOpacity
-            style={styles.quickFeedButton}
-            onPress={handleBottlePress}
-            onLongPress={handleBottleLongPress}
-            delayLongPress={400}
-          >
-            <Text style={styles.quickFeedButtonLabel}>Bottle</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickFeedButton}
-            onPress={handleSolidsPress}
-            onLongPress={handleSolidsLongPress}
-            delayLongPress={400}
-          >
-            <Text style={styles.quickFeedButtonLabel}>Solids</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Diaper buttons */}
-        <View style={styles.diaperRow}>
-          {(['wet', 'dirty', 'mixed', 'dry'] as const).map(status => (
-            <TouchableOpacity
-              key={status}
-              style={styles.diaperButton}
-              onPress={() => handleDiaperPress(status)}
-              onLongPress={() => handleDiaperLongPress(status)}
-              delayLongPress={400}
-            >
-              <Text style={styles.diaperButtonLabel}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <DiaperCard lastLog={lastDiaperLog} onPress={() => setDiaperModalVisible(true)} />
       </View>
 
-      {/* Log list */}
+      {/* Today's log list */}
       <Text style={styles.sectionLabel}>Today</Text>
-
       <ScrollView
         style={styles.list}
         contentContainerStyle={logs.length === 0 ? styles.listEmpty : styles.listContent}
@@ -562,48 +316,27 @@ export const Dashboard: React.FC = () => {
       <SettingsModal visible={settingsVisible} onDismiss={() => setSettingsVisible(false)} />
       <AddBabyModal visible={showAddBaby} onDismiss={() => setShowAddBaby(false)} />
       <NotesModal
-        visible={notesVisible}
+        visible={sleepNotesVisible}
         title="End Sleep Session"
-        elapsed={formatElapsed(sleepElapsed)}
         onSave={handleSaveNotes}
-        onDismiss={() => setNotesVisible(false)}
+        onDismiss={() => setSleepNotesVisible(false)}
       />
-      <NotesModal
-        visible={feedNotesVisible}
-        title="End Feed Session"
-        elapsed={feedModalElapsed}
-        onSave={handleSaveFeedNotes}
-        onDismiss={() => setFeedNotesVisible(false)}
+      <DiaperModal
+        visible={diaperModalVisible}
+        onSave={handleDiaperSave}
+        onDismiss={() => setDiaperModalVisible(false)}
       />
-      <NotesModal
-        visible={bottleNotesVisible}
-        title="Add Note — Bottle"
-        onSave={handleBottleNoteSaved}
-        onDismiss={() => setBottleNotesVisible(false)}
-      />
-      <NotesModal
-        visible={solidsNotesVisible}
-        title="Add Note — Solids"
-        onSave={handleSolidsNoteSaved}
-        onDismiss={() => setSolidsNotesVisible(false)}
-      />
-      <BottleLogModal
-        visible={bottleModalVisible}
-        prefillNotes={pendingBottleNotes}
-        onSave={handleBottleSave}
-        onDismiss={() => {
-          setBottleModalVisible(false);
-          setPendingBottleNotes('');
-        }}
-      />
-      <NotesModal
-        visible={diaperNotesVisible}
-        title={`Add Note — ${pendingDiaperStatus !== null ? pendingDiaperStatus.charAt(0).toUpperCase() + pendingDiaperStatus.slice(1) : ''}`}
-        onSave={handleDiaperNoteSaved}
-        onDismiss={() => {
-          setDiaperNotesVisible(false);
-          setPendingDiaperStatus(null);
-        }}
+      <FeedModal
+        visible={feedModalVisible}
+        initialTab={feedModalTab}
+        feedLeftStart={active.feedLeftStart}
+        feedRightStart={active.feedRightStart}
+        feedLeftElapsed={active.feedLeftElapsed}
+        feedRightElapsed={active.feedRightElapsed}
+        onToggleSide={toggleBreastFeed}
+        onSaveNursing={handleNursingSave}
+        onSaveBottle={handleBottleSave}
+        onDismiss={() => setFeedModalVisible(false)}
       />
     </SafeAreaView>
   );
