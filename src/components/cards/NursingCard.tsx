@@ -46,7 +46,6 @@ export const NursingCard: React.FC<NursingCardProps> = ({
     () =>
       StyleSheet.create({
         shadowWrapper: {
-          flex: 1,
           borderRadius: 16,
           backgroundColor: COLORS.surface,
           shadowColor: COLORS.shadow,

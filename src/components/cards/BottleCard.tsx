@@ -27,7 +27,6 @@ export const BottleCard: React.FC<BottleCardProps> = ({ lastLog, onPress }) => {
     () =>
       StyleSheet.create({
         shadowWrapper: {
-          flex: 1,
           borderRadius: 16,
           backgroundColor: COLORS.surface,
           shadowColor: COLORS.shadow,

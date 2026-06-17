@@ -18,39 +18,41 @@ export interface ColorPalette {
 }
 
 export const LIGHT: ColorPalette = {
-  primary: '#5F7A61',
-  primaryLight: '#D5E0D5',
-  background: '#F8F9FA',
-  surface: '#FFFFFF',
-  surfaceAlt: '#F0F4F0',
-  textPrimary: '#2D3748',
-  textMuted: '#718096',
-  border: '#E2E8F0',
-  sleep: '#4A6FA5',
-  feed: '#D97706',
-  diaper: '#8C6239',
-  active: '#10B981',
+  primary: '#6366F1',       // Electric Indigo
+  primaryLight: '#E0E7FF',  // Light indigo tint
+  background: '#F8FAFC',    // Crisp off-white
+  surface: '#FFFFFF',        // Pure white cards
+  surfaceAlt: '#EEF2FF',    // Indigo-tinted header
+  textPrimary: '#111827',   // Near-black
+  textMuted: '#6B7280',     // Neutral gray
+  border: '#E5E7EB',        // Subtle divider
+
+  sleep: '#8B5CF6',         // Vivid Violet
+  feed: '#F97316',          // Vivid Orange
+  diaper: '#0EA5E9',        // Sky Blue
+  active: '#22C55E',        // Bright Green
   error: '#EF4444',
-  success: '#10B981',
+  success: '#22C55E',
   shadow: '#000000',
-  overlay: 'rgba(0,0,0,0.35)',
+  overlay: 'rgba(0,0,0,0.4)',
 };
 
 export const DARK: ColorPalette = {
-  primary: '#7BA67D',
-  primaryLight: '#2D3D2E',
-  background: '#0F1117',
-  surface: '#1A1E27',
-  surfaceAlt: '#1E2530',
-  textPrimary: '#E2E8F0',
-  textMuted: '#718096',
-  border: '#2D3748',
-  sleep: '#6B9FD4',
-  feed: '#F59E0B',
-  diaper: '#A07850',
-  active: '#10B981',
+  primary: '#818CF8',       // Lighter indigo for dark bg
+  primaryLight: '#312E81',  // Dark indigo
+  background: '#0F172A',    // Very dark navy
+  surface: '#1E293B',       // Dark slate card
+  surfaceAlt: '#1E1B4B',   // Dark indigo header
+  textPrimary: '#F1F5F9',  // Near-white
+  textMuted: '#94A3B8',    // Muted slate
+  border: '#334155',        // Dark border
+
+  sleep: '#A78BFA',         // Lighter violet
+  feed: '#FB923C',          // Lighter orange
+  diaper: '#38BDF8',        // Lighter sky blue
+  active: '#4ADE80',        // Lighter green
   error: '#FC8181',
-  success: '#10B981',
+  success: '#4ADE80',
   shadow: '#000000',
   overlay: 'rgba(0,0,0,0.6)',
 };

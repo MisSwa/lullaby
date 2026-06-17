@@ -20,7 +20,7 @@ This document is the single source of truth for all architectural, design, and e
 
 These rules may never be broken without a full constitution revision.
 
-1. **No Huckleberry purple.** The color `#7C5CBF` or any variant of it is permanently banned. The palette is Sage Green and Slate only. See Section 7.
+1. **No Huckleberry purple.** The exact color `#7C5CBF` is permanently banned. The current palette uses Electric Indigo + vivid category colors. See Section 7.
 2. **No cloud accounts or login.** There is no user authentication. No sign-up. No email. Data stays on-device.
 3. **Single-screen dashboard only.** There is no React Navigation, no bottom tabs, no stack navigator. The entire app lives on one screen. Modals handle input flows.
 4. **Pure React Context + Native Hooks.** No Redux, Zustand, Jotai, MobX, Recoil, or any other state management library.
@@ -188,25 +188,27 @@ This is a paid app. Timer data must never drift or be lost.
 
 ### 7.1 Color Palette
 
+The palette is deliberately high-energy and saturated — energetic, not muted.
+
 ```ts
 // src/theme/colors.ts — canonical source (LIGHT palette)
-primary: '#5F7A61'        // Deep Premium Sage Green
-primaryLight: '#D5E0D5'   // Soft Wash Sage
-background: '#F8F9FA'     // Clean Slate Off-White
-surface: '#FFFFFF'         // Card Backgrounds
-surfaceAlt: '#F0F4F0'     // Subtle sage-tinted surface for app header background
-textPrimary: '#2D3748'    // Deep Charcoal Slate
-textMuted: '#718096'      // Soft Gray Text
-border: '#E2E8F0'         // Subtle Divider Line
+primary: '#6366F1'        // Electric Indigo (primary actions, buttons)
+primaryLight: '#E0E7FF'   // Light indigo tint
+background: '#F8FAFC'     // Crisp off-white
+surface: '#FFFFFF'         // Pure white card backgrounds
+surfaceAlt: '#EEF2FF'     // Indigo-tinted header background
+textPrimary: '#111827'    // Near-black
+textMuted: '#6B7280'      // Neutral gray
+border: '#E5E7EB'         // Subtle divider
 
-sleep: '#4A6FA5'          // Soft Evening Indigo
-feed: '#D97706'           // Warm Amber
-diaper: '#8C6239'         // Soft Earth Clay
-active: '#10B981'         // Vibrant Active Emerald (running timer state)
+sleep: '#8B5CF6'          // Vivid Violet (note: NOT Huckleberry's banned #7C5CBF)
+feed: '#F97316'           // Vivid Orange
+diaper: '#0EA5E9'         // Sky Blue
+active: '#22C55E'         // Bright Green (running timer state)
 
 error: '#EF4444'
-success: '#10B981'
-shadow: '#000000'         // Used as shadowColor on cards
+success: '#22C55E'
+shadow: '#000000'
 ```
 
 No color may be hardcoded inline. Every color reference must go through the `COLORS` object from `src/theme/colors.ts`.
