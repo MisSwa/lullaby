@@ -15,7 +15,10 @@ import { SleepCard } from '../components/cards/SleepCard';
 import { NursingCard } from '../components/cards/NursingCard';
 import { BottleCard } from '../components/cards/BottleCard';
 import { DiaperCard } from '../components/cards/DiaperCard';
+import { SolidsCard } from '../components/cards/SolidsCard';
 import { ActiveSleepView } from '../components/ActiveSleepView';
+import { SolidsModal } from '@modals/SolidsModal';
+import { NudgeSheet } from '../components/NudgeSheet';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -209,8 +212,11 @@ export const Dashboard: React.FC = () => {
     toggleBreastFeed,
     saveBreastFeed,
     logBottle,
+    logSolids,
     logDiaper,
   } = useTracker();
+
+  const { hasSeenNudge, markNudgeSeen } = useSettings();
 
   const [showAddBaby, setShowAddBaby] = useState(false);
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -218,6 +224,8 @@ export const Dashboard: React.FC = () => {
   const [diaperModalVisible, setDiaperModalVisible] = useState(false);
   const [feedModalVisible, setFeedModalVisible] = useState(false);
   const [feedModalTab, setFeedModalTab] = useState<'nursing' | 'bottle'>('nursing');
+  const [solidsModalVisible, setSolidsModalVisible] = useState(false);
+  const [nudgeType, setNudgeType] = useState<'sleep' | 'feed' | 'diaper' | 'solids' | null>(null);
 
   const isSleeping = active.sleepStart !== null;
 
@@ -249,6 +257,13 @@ export const Dashboard: React.FC = () => {
     l => l.type === 'feed' && (l as FeedLog).feedType === 'bottle',
   ) ?? null) as FeedLog | null;
   const lastDiaperLog = (logs.find(l => l.type === 'diaper') ?? null) as DiaperLog | null;
+  const lastSolidsLog = (logs.find(
+    l => l.type === 'feed' && (l as FeedLog).feedType === 'solids',
+  ) ?? null) as FeedLog | null;
+
+  const maybeTriggerNudge = (type: 'sleep' | 'feed' | 'diaper' | 'solids'): void => {
+    if (!hasSeenNudge[type]) setNudgeType(type);
+  };
 
   const handleSleepPress = (): void => {
     if (isSleeping) {
@@ -261,6 +276,7 @@ export const Dashboard: React.FC = () => {
   const handleSaveNotes = async (notes: string): Promise<void> => {
     await stopSleep(notes);
     setSleepNotesVisible(false);
+    maybeTriggerNudge('sleep');
   };
 
   const handleDiaperSave = async (
@@ -269,16 +285,25 @@ export const Dashboard: React.FC = () => {
   ): Promise<void> => {
     await logDiaper(status, undefined, timestamp);
     setDiaperModalVisible(false);
+    maybeTriggerNudge('diaper');
   };
 
   const handleBottleSave = async (amountMl: number): Promise<void> => {
     await logBottle(amountMl);
     setFeedModalVisible(false);
+    maybeTriggerNudge('feed');
   };
 
   const handleNursingSave = async (): Promise<void> => {
     await saveBreastFeed();
     setFeedModalVisible(false);
+    maybeTriggerNudge('feed');
+  };
+
+  const handleSolidsSave = async (notes: string): Promise<void> => {
+    await logSolids(notes);
+    setSolidsModalVisible(false);
+    maybeTriggerNudge('solids');
   };
 
   const openNursingModal = (): void => {
@@ -328,6 +353,11 @@ export const Dashboard: React.FC = () => {
             />
             <BottleCard lastLog={lastBottleLog} onPress={openBottleModal} />
           </View>
+          <SolidsCard
+            lastLog={lastSolidsLog}
+            onPress={() => { void handleSolidsSave(''); }}
+            onLongPress={() => setSolidsModalVisible(true)}
+          />
           <DiaperCard lastLog={lastDiaperLog} onPress={() => setDiaperModalVisible(true)} />
         </Animated.View>
       </View>
@@ -370,6 +400,24 @@ export const Dashboard: React.FC = () => {
         onSaveNursing={handleNursingSave}
         onSaveBottle={handleBottleSave}
         onDismiss={() => setFeedModalVisible(false)}
+      />
+      <SolidsModal
+        visible={solidsModalVisible}
+        onSave={handleSolidsSave}
+        onDismiss={() => setSolidsModalVisible(false)}
+      />
+      <NudgeSheet
+        visible={nudgeType !== null}
+        logType={nudgeType ?? 'feed'}
+        onSkip={async () => {
+          if (nudgeType !== null) await markNudgeSeen(nudgeType);
+          setNudgeType(null);
+        }}
+        onSetupReminders={async () => {
+          if (nudgeType !== null) await markNudgeSeen(nudgeType);
+          setNudgeType(null);
+          setSettingsVisible(true);
+        }}
       />
     </SafeAreaView>
   );

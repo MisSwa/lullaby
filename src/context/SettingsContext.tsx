@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { getSetting, setSetting } from '@services/db';
-import { AppTheme, AppUnits, AppTimeFormat, NotificationPref, NotificationSettings, NotificationType } from '../types/tracker';
+import { AppTheme, AppUnits, AppTimeFormat, NotificationPref, NotificationSettings, NotificationType, HasSeenNudge } from '../types/tracker';
 
 const DEFAULTS: NotificationSettings = {
   feed: { enabled: true, thresholdMinutes: 180 },
@@ -18,6 +18,13 @@ const NOTIFICATION_KEYS: Record<NotificationType, string> = {
 const THEME_KEY = 'app_theme';
 const UNITS_KEY = 'app_units';
 const TIME_FORMAT_KEY = 'app_time_format';
+const NUDGE_KEYS: Record<keyof HasSeenNudge, string> = {
+  sleep: 'nudge_seen_sleep',
+  feed: 'nudge_seen_feed',
+  diaper: 'nudge_seen_diaper',
+  solids: 'nudge_seen_solids',
+};
+const DEFAULT_NUDGE: HasSeenNudge = { sleep: false, feed: false, diaper: false, solids: false };
 const VALID_THEMES = new Set<AppTheme>(['system', 'light', 'dark']);
 const VALID_UNITS = new Set<AppUnits>(['ml', 'oz']);
 const VALID_TIME_FORMATS = new Set<AppTimeFormat>(['12h', '24h']);
@@ -78,6 +85,8 @@ interface SettingsContextType {
   updateUnits: (u: AppUnits) => Promise<void>;
   timeFormat: AppTimeFormat;
   updateTimeFormat: (f: AppTimeFormat) => Promise<void>;
+  hasSeenNudge: HasSeenNudge;
+  markNudgeSeen: (type: keyof HasSeenNudge) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -88,6 +97,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [theme, setTheme] = useState<AppTheme>('system');
   const [units, setUnits] = useState<AppUnits>('ml');
   const [timeFormat, setTimeFormat] = useState<AppTimeFormat>('12h');
+  const [hasSeenNudge, setHasSeenNudge] = useState<HasSeenNudge>(DEFAULT_NUDGE);
 
   useEffect(() => {
     (async () => {
@@ -108,6 +118,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         const rawTimeFormat = await getSetting(db, TIME_FORMAT_KEY);
         setTimeFormat(parseTimeFormat(rawTimeFormat));
+
+        const nudgeTypes: (keyof HasSeenNudge)[] = ['sleep', 'feed', 'diaper', 'solids'];
+        const loadedNudge: HasSeenNudge = { ...DEFAULT_NUDGE };
+        for (const type of nudgeTypes) {
+          const raw = await getSetting(db, NUDGE_KEYS[type]);
+          loadedNudge[type] = raw === '1';
+        }
+        setHasSeenNudge(loadedNudge);
       } catch (error) {
         console.error('Failed to load settings:', error);
       }
@@ -166,8 +184,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [db],
   );
 
+  const markNudgeSeen = useCallback(
+    async (type: keyof HasSeenNudge): Promise<void> => {
+      setHasSeenNudge(prev => ({ ...prev, [type]: true }));
+      try {
+        await setSetting(db, NUDGE_KEYS[type], '1');
+      } catch (error) {
+        console.error(`Failed to persist nudge_seen_${type}:`, error);
+      }
+    },
+    [db],
+  );
+
   return (
-    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme, units, updateUnits, timeFormat, updateTimeFormat }}>
+    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme, units, updateUnits, timeFormat, updateTimeFormat, hasSeenNudge, markNudgeSeen }}>
       {children}
     </SettingsContext.Provider>
   );

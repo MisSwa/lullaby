@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '@hooks/useTheme';
 import { useSettings } from '@context/SettingsContext';
 import { TYPOGRAPHY } from '@theme/colors';
@@ -105,6 +106,15 @@ export const NursingCard: React.FC<NursingCardProps> = ({
   const totalRight = feedRightElapsed + rightTick;
   const isRunning = feedLeftStart !== null || feedRightStart !== null;
 
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const onPressIn = (): void => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+  };
+  const onPressOut = (): void => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
   const timeSinceStr = timeSince(lastLog?.timestamp ?? null, now);
 
   let detailStr = '–';
@@ -123,22 +133,30 @@ export const NursingCard: React.FC<NursingCardProps> = ({
   }
 
   return (
-    <TouchableOpacity style={styles.shadowWrapper} onPress={onPress} activeOpacity={0.75}>
-      <View style={styles.clipWrapper}>
-        <View style={styles.headerBand}>
-          <Text style={styles.headerLabel}>Nursing</Text>
-          {notifications.feed.enabled && (
-            <Ionicons name="notifications-outline" size={14} color={COLORS.surface} />
-          )}
-        </View>
-        <View style={styles.body}>
-          <View style={styles.ghost}>
-            <Ionicons name="heart-outline" size={68} color={COLORS.feed} />
+    <Animated.View style={[animStyle, { flex: 1 }]}>
+      <TouchableOpacity
+        style={styles.shadowWrapper}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        activeOpacity={0.75}
+      >
+        <View style={styles.clipWrapper}>
+          <View style={styles.headerBand}>
+            <Text style={styles.headerLabel}>Nursing</Text>
+            {notifications.feed.enabled && (
+              <Ionicons name="notifications-outline" size={14} color={COLORS.surface} />
+            )}
           </View>
-          <Text style={styles.timeSince}>{timeSinceStr}</Text>
-          <Text style={styles.detail}>{detailStr}</Text>
+          <View style={styles.body}>
+            <View style={styles.ghost}>
+              <Ionicons name="heart-outline" size={68} color={COLORS.feed} />
+            </View>
+            <Text style={styles.timeSince}>{timeSinceStr}</Text>
+            <Text style={styles.detail}>{detailStr}</Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };

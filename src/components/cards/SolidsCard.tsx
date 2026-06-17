@@ -3,25 +3,33 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '@hooks/useTheme';
-import { useSettings } from '@context/SettingsContext';
 import { TYPOGRAPHY } from '@theme/colors';
 import { timeSince } from '../../utils/timeSince';
-import { DiaperLog } from '../../types/tracker';
+import { FeedLog } from '../../types/tracker';
 
-interface DiaperCardProps {
-  lastLog: DiaperLog | null;
+interface SolidsCardProps {
+  lastLog: FeedLog | null;
   onPress: () => void;
+  onLongPress: () => void;
 }
 
-export const DiaperCard: React.FC<DiaperCardProps> = ({ lastLog, onPress }) => {
+export const SolidsCard: React.FC<SolidsCardProps> = ({ lastLog, onPress, onLongPress }) => {
   const COLORS = useTheme();
-  const { notifications } = useSettings();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(interval);
   }, []);
+
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const onPressIn = (): void => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+  };
+  const onPressOut = (): void => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
 
   const styles = useMemo(
     () =>
@@ -46,7 +54,7 @@ export const DiaperCard: React.FC<DiaperCardProps> = ({ lastLog, onPress }) => {
           justifyContent: 'space-between',
           paddingHorizontal: 14,
           paddingVertical: 9,
-          backgroundColor: COLORS.diaper,
+          backgroundColor: COLORS.feed,
         },
         headerLabel: {
           fontSize: 11,
@@ -82,41 +90,27 @@ export const DiaperCard: React.FC<DiaperCardProps> = ({ lastLog, onPress }) => {
     [COLORS],
   );
 
-  const scale = useSharedValue(1);
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const onPressIn = (): void => {
-    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
-  };
-  const onPressOut = (): void => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-  };
-
   const timeSinceStr = timeSince(lastLog?.timestamp ?? null, now);
-
-  let detailStr = '–';
-  if (lastLog) {
-    detailStr = lastLog.status.charAt(0).toUpperCase() + lastLog.status.slice(1);
-  }
+  const detailStr = lastLog ? (lastLog.notes.length > 0 ? lastLog.notes : 'logged') : '–';
 
   return (
     <Animated.View style={animStyle}>
       <TouchableOpacity
         style={styles.shadowWrapper}
         onPress={onPress}
+        onLongPress={onLongPress}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         activeOpacity={0.75}
       >
         <View style={styles.clipWrapper}>
           <View style={styles.headerBand}>
-            <Text style={styles.headerLabel}>Diaper</Text>
-            {notifications.diaper.enabled && (
-              <Ionicons name="notifications-outline" size={16} color={COLORS.surface} />
-            )}
+            <Text style={styles.headerLabel}>Solids</Text>
+            <Ionicons name="notifications-outline" size={16} color={COLORS.surface} style={{ opacity: 0 }} />
           </View>
           <View style={styles.body}>
             <View style={styles.ghost}>
-              <Ionicons name="water-outline" size={88} color={COLORS.diaper} />
+              <Ionicons name="leaf-outline" size={88} color={COLORS.feed} />
             </View>
             <Text style={styles.timeSince}>{timeSinceStr}</Text>
             <Text style={styles.detail}>{detailStr}</Text>

@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '@hooks/useTheme';
 import { useSettings } from '@context/SettingsContext';
 import { TYPOGRAPHY } from '@theme/colors';
@@ -114,6 +115,15 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
     [COLORS],
   );
 
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const onPressIn = (): void => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+  };
+  const onPressOut = (): void => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
   const timeSinceStr = timeSince(lastLog?.timestamp ?? null, now);
 
   let detailStr = '–';
@@ -129,29 +139,37 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
   }
 
   return (
-    <TouchableOpacity style={styles.shadowWrapper} onPress={onPress} activeOpacity={0.75}>
-      <View style={styles.clipWrapper}>
-        <View style={styles.headerBand}>
-          <Text style={styles.headerLabel}>Sleep</Text>
-          <View style={styles.headerRight}>
-            {notifications.sleep.enabled && (
-              <Ionicons name="notifications-outline" size={16} color={COLORS.surface} />
-            )}
-            {sleepStart !== null && (
-              <View style={styles.liveBadge}>
-                <Text style={styles.liveBadgeText}>{formatHMS(liveSecs)}</Text>
-              </View>
-            )}
+    <Animated.View style={animStyle}>
+      <TouchableOpacity
+        style={styles.shadowWrapper}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        activeOpacity={0.75}
+      >
+        <View style={styles.clipWrapper}>
+          <View style={styles.headerBand}>
+            <Text style={styles.headerLabel}>Sleep</Text>
+            <View style={styles.headerRight}>
+              {notifications.sleep.enabled && (
+                <Ionicons name="notifications-outline" size={16} color={COLORS.surface} />
+              )}
+              {sleepStart !== null && (
+                <View style={styles.liveBadge}>
+                  <Text style={styles.liveBadgeText}>{formatHMS(liveSecs)}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          <View style={styles.body}>
+            <View style={styles.ghost}>
+              <Ionicons name="moon-outline" size={88} color={COLORS.sleep} />
+            </View>
+            <Text style={styles.timeSince}>{timeSinceStr}</Text>
+            <Text style={styles.detail}>{detailStr}</Text>
           </View>
         </View>
-        <View style={styles.body}>
-          <View style={styles.ghost}>
-            <Ionicons name="moon-outline" size={88} color={COLORS.sleep} />
-          </View>
-          <Text style={styles.timeSince}>{timeSinceStr}</Text>
-          <Text style={styles.detail}>{detailStr}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };

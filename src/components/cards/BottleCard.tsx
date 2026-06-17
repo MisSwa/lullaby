@@ -2,6 +2,7 @@ import React, { useMemo, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '@hooks/useTheme';
 import { useSettings } from '@context/SettingsContext';
 import { TYPOGRAPHY } from '@theme/colors';
@@ -82,6 +83,15 @@ export const BottleCard: React.FC<BottleCardProps> = ({ lastLog, onPress }) => {
     [COLORS],
   );
 
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const onPressIn = (): void => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+  };
+  const onPressOut = (): void => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
   const timeSinceStr = timeSince(lastLog?.timestamp ?? null, now);
 
   let detailStr = '–';
@@ -90,22 +100,30 @@ export const BottleCard: React.FC<BottleCardProps> = ({ lastLog, onPress }) => {
   }
 
   return (
-    <TouchableOpacity style={styles.shadowWrapper} onPress={onPress} activeOpacity={0.75}>
-      <View style={styles.clipWrapper}>
-        <View style={styles.headerBand}>
-          <Text style={styles.headerLabel}>Bottle</Text>
-          {notifications.feed.enabled && (
-            <Ionicons name="notifications-outline" size={14} color={COLORS.surface} />
-          )}
-        </View>
-        <View style={styles.body}>
-          <View style={styles.ghost}>
-            <MaterialCommunityIcons name="baby-bottle-outline" size={60} color={COLORS.feed} />
+    <Animated.View style={[animStyle, { flex: 1 }]}>
+      <TouchableOpacity
+        style={styles.shadowWrapper}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        activeOpacity={0.75}
+      >
+        <View style={styles.clipWrapper}>
+          <View style={styles.headerBand}>
+            <Text style={styles.headerLabel}>Bottle</Text>
+            {notifications.feed.enabled && (
+              <Ionicons name="notifications-outline" size={14} color={COLORS.surface} />
+            )}
           </View>
-          <Text style={styles.timeSince}>{timeSinceStr}</Text>
-          <Text style={styles.detail}>{detailStr}</Text>
+          <View style={styles.body}>
+            <View style={styles.ghost}>
+              <MaterialCommunityIcons name="baby-bottle-outline" size={60} color={COLORS.feed} />
+            </View>
+            <Text style={styles.timeSince}>{timeSinceStr}</Text>
+            <Text style={styles.detail}>{detailStr}</Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };

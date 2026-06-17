@@ -47,6 +47,7 @@ The following packages are approved. Do not add any package not on this list wit
 | `@expo/vector-icons` | Icon sets (Ionicons, MaterialCommunityIcons) for UI icons and card watermarks |
 | `@react-native-community/datetimepicker` | Native date/time picker for retroactive session time correction in modals |
 | `@react-native-community/slider` | Native slider for bottle amount input (0–300 ml, step 5) |
+| `react-native-reanimated` | Spring animations for card press feedback (scale 0.97 on press) |
 | React Native core | `AppState`, `TouchableOpacity`, `StyleSheet`, etc. |
 
 **Forbidden categories:** HTTP clients, analytics SDKs, crash reporting SDKs, UI component libraries, date formatting libraries (use `Intl.DateTimeFormat` or native `.toLocaleTimeString()`). Note: `@expo/vector-icons` is explicitly approved as an **icon library** and is not considered a UI component library under this rule.
@@ -116,7 +117,7 @@ Active timers (sleep, breast feed sides) are never written to SQLite until the u
 - **Sleep tracking:** Toggle start/stop. Live elapsed timer on dashboard. Saves start + end Unix timestamps.
 - **Breast feed tracking:** Accessed via FeedModal (Nursing tab). Two large L/R circle buttons with live elapsed timers under each. Only one side can run at a time — starting one auto-pauses the other. "Save Session" button appears once any time > 0 has accumulated. Quick-tap nursing card opens FeedModal pre-set to Nursing tab.
 - **Bottle feed logging:** Via FeedModal (Bottle tab) — slider (0–300 ml, step 5), ml/oz toggle reads from SettingsContext, retroactive time correction available.
-- **Solids logging:** Third option in FeedModal; single tap to log, no amount field.
+- **Solids logging:** Via SolidsCard (full-width, between feed row and DiaperCard). Single tap logs immediately with no notes; long-press opens SolidsModal for optional notes before saving.
 - **Diaper logging:** Modal-based via DiaperModal — tapping the card opens a modal with four large icon buttons (Pee/Poo/Mixed/Dry). Tapping a button auto-saves and closes. Retroactive timestamp correction available before tapping.
 - **Today-only log list:** Reverse-chronological list of today's events for the active baby. No pagination or date picker.
 - **Delete log:** Swipe or tap ✕ to delete any log entry.
@@ -147,6 +148,7 @@ There is one screen: `Dashboard`. Supplementary flows use React Native `Modal` c
 - `DiaperModal` — four icon buttons (Pee/Poo/Mixed/Dry); tap auto-logs and closes; retroactive timestamp
 - `FeedModal` — unified Nursing + Bottle tabs; replaces the deleted `BottleLogModal`
 - `NotesModal` — optional free-text notes; used when ending a sleep session
+- `SolidsModal` — optional notes ("What did they eat?") opened via long-press on SolidsCard
 - `SettingsModal` — app preferences (theme, units, notification thresholds per category)
 
 `BottleLogModal` is deleted — fully replaced by `FeedModal`.
@@ -297,10 +299,13 @@ src/
     DashboardHeader.tsx    — Baby avatar, age string, multi-baby switcher dropdown, gear icon
   components/
     ActiveSleepView.tsx    — Full-width sleep takeover: large HH:MM:SS, editable start, STOP button
+    NudgeSheet.tsx         — Bottom-sheet shown once per log type after first save; prompts reminders setup
+    SplitButtonRow.tsx     — Two equal-width side-by-side buttons (Skip | Set up reminders pattern)
     cards/
       SleepCard.tsx        — Sleep tracking card (full-width)
       NursingCard.tsx      — Breast feed card (half-width, paired with BottleCard)
       BottleCard.tsx       — Bottle feed card (half-width, paired with NursingCard)
+      SolidsCard.tsx       — Solids tracking card (full-width); tap=quick-log, long-press=SolidsModal
       DiaperCard.tsx       — Diaper card (full-width)
   modals/
     OnboardingModal.tsx    — First-launch: name + DOB collection, blocks dashboard until done
@@ -308,6 +313,7 @@ src/
     DiaperModal.tsx        — 4-button diaper picker (replaces old inline buttons)
     FeedModal.tsx          — Unified Nursing/Bottle/Solids modal (replaces deleted BottleLogModal)
     NotesModal.tsx         — Optional text notes when ending a sleep session
+    SolidsModal.tsx        — Optional notes ("What did they eat?") for long-press solids logging
     SettingsModal.tsx      — App preferences: theme, units, notification thresholds
   utils/
     ageString.ts           — computeAge(dob: number): string → "4 months" / "2 years 3 months"

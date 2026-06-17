@@ -57,3 +57,12 @@ export interface NotificationSettings {
   diaper: NotificationPref;
   sleep: NotificationPref;
 }
+
+// ─── Nudge State ─────────────────────────────────────────────────────────────
+
+export interface HasSeenNudge {
+  sleep: boolean;
+  feed: boolean;
+  diaper: boolean;
+  solids: boolean;
+}

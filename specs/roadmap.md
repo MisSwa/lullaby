@@ -213,18 +213,19 @@
 **Scope:** Small behavioral improvements that don't require new screens.
 
 ### Deliverables
-- [ ] **Congratulatory nudge bottom sheet** — shown once after the user saves their first log of each type (tracked in `SettingsContext` as `hasSeenNudge: { sleep: boolean, feed: boolean, diaper: boolean }`). Content: "First sleep logged! Set up a reminder so you never miss one." Split-button CTA: "Skip" (outlined) + "Set up" (filled, opens SettingsModal to notifications section). One-time only per type.
-- [ ] **Split-button CTA pattern** — extracted as a reusable `SplitButtonRow` component in `src/components/SplitButtonRow.tsx`: takes `leftLabel`, `rightLabel`, `onLeft`, `onRight` props. Used in the nudge sheet and anywhere else a dismiss/confirm pair is needed (e.g., "Discard session?").
-- [ ] **Computed age string helper** — if not already done in Phase 1, extract to `src/utils/ageString.ts` as a pure function `computeAge(dob: number): string` returning e.g. "4 months" or "2 years 3 months".
-- [ ] **Card press animation** — subtle `scale(0.97)` press feedback on all tracking cards using Reanimated `useSharedValue` + `withSpring`. Communicates that the card is tappable.
-- [ ] **Solids log notes** — if the user holds (long-press) the Solids card, open a minimal `SolidsModal` with a single free-text notes field ("What did they eat?") before saving. Short-tap still logs immediately. This adds food logging without changing the one-tap flow.
+- [x] **Congratulatory nudge bottom sheet** — shown once after the user saves their first log of each type (tracked in `SettingsContext` as `hasSeenNudge: { sleep: boolean, feed: boolean, diaper: boolean, solids: boolean }`). Content: "First sleep logged! Set up a reminder so you never miss one." Split-button CTA: "Skip" (outlined) + "Set up reminders" (filled, opens SettingsModal to notifications section). One-time only per type.
+- [x] **Split-button CTA pattern** — extracted as a reusable `SplitButtonRow` component in `src/components/SplitButtonRow.tsx`: takes `leftLabel`, `rightLabel`, `onLeftPress`, `onRightPress` props. Used in NudgeSheet.
+- [x] **Computed age string helper** — already present from Phase 1 (`src/utils/ageString.ts`).
+- [x] **Card press animation** — subtle `scale(0.97)` spring press feedback on all tracking cards (SleepCard, NursingCard, BottleCard, DiaperCard, SolidsCard) using `react-native-reanimated` `useSharedValue` + `withSpring`.
+- [x] **SolidsCard** — new full-width card between the feed row and DiaperCard. Single tap quick-logs with no notes; long-press opens `SolidsModal` for optional notes.
+- [x] **SolidsModal** — minimal notes modal ("What did they eat?") triggered by long-press on SolidsCard. Mirrors NotesModal pattern.
 
 ### Done when
-- Nudge sheet appears on first log of each type and never again
-- Split button component is reused across at least two places
-- Card press animation feels natural (not over-animated)
-- Solids long-press works without breaking the short-tap behavior
-- Zero TypeScript errors
+- Nudge sheet appears on first log of each type and never again ✓
+- Split button component is reused in NudgeSheet ✓
+- Card press animation feels natural (not over-animated) ✓
+- Solids long-press works without breaking the short-tap behavior ✓
+- Zero TypeScript errors ✓
 
 ---
 
