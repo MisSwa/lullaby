@@ -13,7 +13,9 @@ import { useTheme } from '@hooks/useTheme';
 import { TYPOGRAPHY } from '@theme/colors';
 
 interface BabyFormModalProps {
-  mode: 'onboarding' | 'add';
+  mode: 'onboarding' | 'add' | 'edit';
+  initialName?: string;
+  initialDob?: number;
   onSave: (name: string, dob: number) => Promise<void>;
   onDismiss?: () => void;
 }
@@ -25,7 +27,7 @@ const threeYearsAgo = () => {
   return d;
 };
 
-export const BabyFormModal: React.FC<BabyFormModalProps> = ({ mode, onSave, onDismiss }) => {
+export const BabyFormModal: React.FC<BabyFormModalProps> = ({ mode, initialName, initialDob, onSave, onDismiss }) => {
   const COLORS = useTheme();
   const styles = useMemo(
     () =>
@@ -97,8 +99,8 @@ export const BabyFormModal: React.FC<BabyFormModalProps> = ({ mode, onSave, onDi
     [COLORS],
   );
 
-  const [name, setName] = useState('');
-  const [dob, setDob] = useState<Date>(yesterday());
+  const [name, setName] = useState(initialName ?? '');
+  const [dob, setDob] = useState<Date>(() => (initialDob ? new Date(initialDob) : yesterday()));
   const [saving, setSaving] = useState(false);
   // Android needs explicit show/hide; iOS renders inline always
   const [showPicker, setShowPicker] = useState(Platform.OS === 'ios');
@@ -181,11 +183,11 @@ export const BabyFormModal: React.FC<BabyFormModalProps> = ({ mode, onSave, onDi
         {saving ? (
           <ActivityIndicator size="small" color={COLORS.surface} />
         ) : (
-          <Text style={styles.saveButtonText}>Save</Text>
+          <Text style={styles.saveButtonText}>{mode === 'edit' ? 'Update' : 'Save'}</Text>
         )}
       </TouchableOpacity>
 
-      {mode === 'add' && (
+      {(mode === 'add' || mode === 'edit') && (
         <TouchableOpacity style={styles.cancelButton} onPress={onDismiss}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>

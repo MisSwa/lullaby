@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { getSetting, setSetting } from '@services/db';
-import { AppTheme, AppUnits, NotificationPref, NotificationSettings, NotificationType } from '../types/tracker';
+import { AppTheme, AppUnits, AppTimeFormat, NotificationPref, NotificationSettings, NotificationType } from '../types/tracker';
 
 const DEFAULTS: NotificationSettings = {
   feed: { enabled: true, thresholdMinutes: 180 },
@@ -17,8 +17,10 @@ const NOTIFICATION_KEYS: Record<NotificationType, string> = {
 
 const THEME_KEY = 'app_theme';
 const UNITS_KEY = 'app_units';
+const TIME_FORMAT_KEY = 'app_time_format';
 const VALID_THEMES = new Set<AppTheme>(['system', 'light', 'dark']);
 const VALID_UNITS = new Set<AppUnits>(['ml', 'oz']);
+const VALID_TIME_FORMATS = new Set<AppTimeFormat>(['12h', '24h']);
 
 function parsePreference(raw: string | null, fallback: NotificationPref): NotificationPref {
   if (!raw) return fallback;
@@ -57,6 +59,13 @@ function parseUnits(raw: string | null): AppUnits {
   return 'ml';
 }
 
+function parseTimeFormat(raw: string | null): AppTimeFormat {
+  if (raw !== null && VALID_TIME_FORMATS.has(raw as AppTimeFormat)) {
+    return raw as AppTimeFormat;
+  }
+  return '12h';
+}
+
 interface SettingsContextType {
   notifications: NotificationSettings;
   updateNotificationPref: (
@@ -67,6 +76,8 @@ interface SettingsContextType {
   updateTheme: (t: AppTheme) => Promise<void>;
   units: AppUnits;
   updateUnits: (u: AppUnits) => Promise<void>;
+  timeFormat: AppTimeFormat;
+  updateTimeFormat: (f: AppTimeFormat) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -76,6 +87,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [notifications, setNotifications] = useState<NotificationSettings>(DEFAULTS);
   const [theme, setTheme] = useState<AppTheme>('system');
   const [units, setUnits] = useState<AppUnits>('ml');
+  const [timeFormat, setTimeFormat] = useState<AppTimeFormat>('12h');
 
   useEffect(() => {
     (async () => {
@@ -93,6 +105,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         const rawUnits = await getSetting(db, UNITS_KEY);
         setUnits(parseUnits(rawUnits));
+
+        const rawTimeFormat = await getSetting(db, TIME_FORMAT_KEY);
+        setTimeFormat(parseTimeFormat(rawTimeFormat));
       } catch (error) {
         console.error('Failed to load settings:', error);
       }
@@ -139,8 +154,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [db],
   );
 
+  const updateTimeFormat = useCallback(
+    async (f: AppTimeFormat): Promise<void> => {
+      setTimeFormat(f);
+      try {
+        await setSetting(db, TIME_FORMAT_KEY, f);
+      } catch (error) {
+        console.error('Failed to persist time format:', error);
+      }
+    },
+    [db],
+  );
+
   return (
-    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme, units, updateUnits }}>
+    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme, units, updateUnits, timeFormat, updateTimeFormat }}>
       {children}
     </SettingsContext.Provider>
   );

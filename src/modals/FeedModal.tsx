@@ -55,7 +55,7 @@ export const FeedModal: React.FC<FeedModalProps> = ({
   onDismiss,
 }) => {
   const COLORS = useTheme();
-  const { units, updateUnits } = useSettings();
+  const { units, updateUnits, timeFormat } = useSettings();
 
   const styles = useMemo(
     () =>
@@ -336,10 +336,12 @@ export const FeedModal: React.FC<FeedModalProps> = ({
   const nursingTime = new Date(nursingStartTime).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: timeFormat === '12h',
   });
   const bottleTime = new Date(bottleStartTime).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: timeFormat === '12h',
   });
 
   return (

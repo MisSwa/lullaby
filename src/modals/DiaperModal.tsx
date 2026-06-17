@@ -11,6 +11,7 @@ import {
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@hooks/useTheme';
+import { useSettings } from '@context/SettingsContext';
 import { TYPOGRAPHY } from '@theme/colors';
 import { DiaperLog } from '../types/tracker';
 
@@ -40,6 +41,7 @@ const MAX_RETROACTIVE_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 export const DiaperModal: React.FC<DiaperModalProps> = ({ visible, onSave, onDismiss }) => {
   const COLORS = useTheme();
+  const { timeFormat } = useSettings();
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -175,6 +177,7 @@ export const DiaperModal: React.FC<DiaperModalProps> = ({ visible, onSave, onDis
   const formattedTime = new Date(startTimestamp).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: timeFormat === '12h',
   });
 
   return (

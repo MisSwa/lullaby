@@ -23,7 +23,7 @@ interface ActiveSleepViewProps {
 
 export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, onStop }) => {
   const COLORS = useTheme();
-  const { notifications } = useSettings();
+  const { notifications, timeFormat } = useSettings();
   const { updateSleepStart } = useTracker();
   const elapsed = useLiveTick(sleepStart);
 
@@ -159,6 +159,7 @@ export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, on
   const startedAt = new Date(sleepStart).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: timeFormat === '12h',
   });
 
   const handleTimeChange = (_event: DateTimePickerEvent, selected?: Date): void => {

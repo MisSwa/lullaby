@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, StyleSheet, Animated, Easing } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
+import { useSettings } from '@context/SettingsContext';
 import { useTheme } from '@hooks/useTheme';
 import { TYPOGRAPHY } from '@theme/colors';
 import { BabyLog, DiaperLog, FeedLog, SleepLog } from '../types/tracker';
@@ -18,8 +19,8 @@ import { ActiveSleepView } from '../components/ActiveSleepView';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function formatTime(ts: number, hour12: boolean): string {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12 });
 }
 
 function formatElapsed(secs: number): string {
@@ -95,6 +96,7 @@ interface LogCardProps {
 
 const LogCard: React.FC<LogCardProps> = ({ log, onDelete }) => {
   const COLORS = useTheme();
+  const { timeFormat } = useSettings();
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -144,7 +146,7 @@ const LogCard: React.FC<LogCardProps> = ({ log, onDelete }) => {
       <View style={[styles.cardStrip, { backgroundColor: colorForLog(log, COLORS) }]} />
       <View style={styles.cardBody}>
         <Text style={styles.cardLabel}>{labelForLog(log)}</Text>
-        <Text style={styles.cardTime}>{formatTime(log.timestamp)}</Text>
+        <Text style={styles.cardTime}>{formatTime(log.timestamp, timeFormat === '12h')}</Text>
         {duration.length > 0 && (
           <Text style={[styles.cardDuration, isInProgress && styles.cardDurationActive]}>
             {duration}

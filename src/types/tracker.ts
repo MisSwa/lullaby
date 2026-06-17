@@ -41,6 +41,7 @@ export interface ActiveTrackers {
 
 export type AppTheme = 'system' | 'light' | 'dark';
 export type AppUnits = 'ml' | 'oz';
+export type AppTimeFormat = '12h' | '24h';
 
 // ─── Notification Settings ───────────────────────────────────────────────────
 

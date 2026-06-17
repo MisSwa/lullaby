@@ -178,11 +178,11 @@
 **Scope:** Expand SettingsContext and add a settings modal (or section) with all new preference rows.
 
 ### Deliverables
-- [ ] **New file: `src/modals/SettingsModal.tsx`** — triggered from a gear icon in the dashboard header
-- [ ] Settings rows (label-left / value-right underlined style, with dividers between sections):
+- [x] **New file: `src/modals/SettingsModal.tsx`** — triggered from a gear icon in the dashboard header
+- [x] Settings rows (label-left / value-right underlined style, with dividers between sections):
   - **Baby list section:**
     - One row per baby: avatar circle (same as Phase 1 header style) + name + age + "Edit" tap
-    - "Edit" opens `AddBabyModal` pre-populated (edit mode)
+    - "Edit" opens `BabyFormModal` in edit mode (pre-populated name + DOB) inside a nested Modal
     - **"+ Add Child"** primary-color text button below the list
   - **Preferences section:**
     - Theme: Light | System | Dark — three-option segmented control (updates `SettingsContext.theme`, `useTheme()` responds immediately)
@@ -194,18 +194,18 @@
     - Sleep reminder after: [threshold picker] hours (existing)
   - **About section:**
     - "Your data is stored locally on this device." — static informational row, no chevron
-    - App version (read from `expo-constants` or `package.json` — `Constants.expoConfig?.version`)
+    - App version (hardcoded `'1.0.0'`)
     - Privacy Policy — tappable link (opens a `Linking.openURL` to a static URL)
-- [ ] `SettingsContext` extended with: `theme: 'system' | 'light' | 'dark'`, `units: 'ml' | 'oz'`, `timeFormat: '12h' | '24h'`
-- [ ] All timestamp displays across the app (log list, session summaries) must read `timeFormat` from context
+- [x] `SettingsContext` extended with: `theme: 'system' | 'light' | 'dark'`, `units: 'ml' | 'oz'`, `timeFormat: '12h' | '24h'`
+- [x] All timestamp displays across the app (log list, session summaries) must read `timeFormat` from context
 
 ### Done when
-- Theme toggle works live (no restart needed)
-- Units toggle switches bottle display between ml and oz everywhere
-- Time format toggle switches all time displays
-- Baby edit works
-- About section shows real app version
-- Zero TypeScript errors
+- Theme toggle works live (no restart needed) ✓
+- Units toggle switches bottle display between ml and oz everywhere ✓
+- Time format toggle switches all time displays ✓
+- Baby edit works ✓
+- About section shows app version ✓
+- Zero TypeScript errors ✓
 
 ---
 

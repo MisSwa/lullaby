@@ -166,6 +166,8 @@ A separate `SettingsContext` owns:
 - `theme: 'system' | 'light' | 'dark'` — controls `useTheme()` override
 - `units: 'ml' | 'oz'` — persisted; used in FeedModal bottle tab and log list display
 - `updateUnits(u: 'ml' | 'oz'): void`
+- `timeFormat: '12h' | '24h'` — persisted; applied to every `toLocaleTimeString` call in the app
+- `updateTimeFormat(f: '12h' | '24h'): void`
 
 No prop drilling beyond two levels. If a component needs data from more than two levels up, it must consume context directly.
 

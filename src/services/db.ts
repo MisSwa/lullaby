@@ -72,6 +72,20 @@ export async function createBaby(
   }
 }
 
+export async function updateBaby(
+  db: SQLite.SQLiteDatabase,
+  id: string,
+  name: string,
+  dob: number,
+): Promise<void> {
+  try {
+    await db.runAsync('UPDATE babies SET name = ?, dob = ? WHERE id = ?;', [name, dob, id]);
+  } catch (error) {
+    console.error('Failed to update baby:', error);
+    throw error;
+  }
+}
+
 export async function fetchBabies(db: SQLite.SQLiteDatabase): Promise<Baby[]> {
   try {
     const rows = await db.getAllAsync<{

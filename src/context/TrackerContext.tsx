@@ -10,7 +10,7 @@ import {
   DiaperLog,
   NotificationType,
 } from '../types/tracker';
-import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby } from '@services/db';
+import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby, updateBaby } from '@services/db';
 import { useSettings } from '@context/SettingsContext';
 import { useNotifications } from '@hooks/useNotifications';
 
@@ -30,6 +30,7 @@ interface TrackerContextType {
   logDiaper: (status: 'wet' | 'dirty' | 'mixed' | 'dry', notes?: string, timestamp?: number) => Promise<void>;
   removeLog: (id: string) => Promise<void>;
   createBaby: (name: string, dob: number) => Promise<void>;
+  updateBaby: (id: string, name: string, dob: number) => Promise<void>;
   updateSleepStart: (timestamp: number) => void;
 }
 
@@ -142,6 +143,16 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
     } catch (error) {
       console.error('Failed to create baby:', error);
+      throw error;
+    }
+  };
+
+  const handleUpdateBaby = async (id: string, name: string, dob: number): Promise<void> => {
+    try {
+      await updateBaby(db, id, name, dob);
+      setBabies(prev => prev.map(b => (b.id === id ? { ...b, name, dob } : b)));
+    } catch (error) {
+      console.error('Failed to update baby:', error);
       throw error;
     }
   };
@@ -364,6 +375,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
         logDiaper,
         removeLog,
         createBaby: handleCreateBaby,
+        updateBaby: handleUpdateBaby,
         updateSleepStart,
       }}
     >
