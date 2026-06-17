@@ -30,6 +30,7 @@ interface TrackerContextType {
   logDiaper: (status: 'wet' | 'dirty' | 'mixed' | 'dry', notes?: string, timestamp?: number) => Promise<void>;
   removeLog: (id: string) => Promise<void>;
   createBaby: (name: string, dob: number) => Promise<void>;
+  updateSleepStart: (timestamp: number) => void;
 }
 
 const INITIAL_ACTIVE: ActiveTrackers = {
@@ -165,6 +166,16 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const startSleep = (): void => {
     setActive(prev => ({ ...prev, sleepStart: Date.now() }));
+  };
+
+  const MAX_SLEEP_RETROACTIVE_MS = 12 * 60 * 60 * 1000;
+
+  const updateSleepStart = (timestamp: number): void => {
+    const now = Date.now();
+    if (timestamp > now) throw new Error('Start time cannot be in the future.');
+    if (now - timestamp > MAX_SLEEP_RETROACTIVE_MS)
+      throw new Error('Start time cannot be more than 12 hours in the past.');
+    setActive(prev => ({ ...prev, sleepStart: timestamp }));
   };
 
   const stopSleep = async (notes = ''): Promise<void> => {
@@ -353,6 +364,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
         logDiaper,
         removeLog,
         createBaby: handleCreateBaby,
+        updateSleepStart,
       }}
     >
       {children}

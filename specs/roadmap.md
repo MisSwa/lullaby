@@ -60,13 +60,13 @@
 **Scope:** The sleep card's expanded/active view. Only changes what happens when sleep is running.
 
 ### Deliverables
-- [ ] When sleep is active, the sleep card **expands** (or transitions to an expanded layout) showing:
+- [x] When sleep is active, the sleep card **expands** (or transitions to an expanded layout) showing:
   - Large `HH : MM : SS` timer display, centered, with unit labels (HOURS / MIN / SEC) in small muted text beneath each
   - Current elapsed time computed from `sleepStartTimestamp` in `TrackerContext`
-- [ ] **Tappable "Started at HH:MM AM/PM" row** below the timer — tapping opens the `@react-native-community/datetimepicker` in `mode="time"` to allow retroactive correction; on confirm, updates `sleepStartTimestamp` in `TrackerContext` (clamps to max 12h in the past; shows an inline error if out of range)
-- [ ] **Large STOP button** — minimum 80px height, full card width, `COLORS.active` background, dashed outer ring (implemented with a `borderStyle: 'dashed'` wrapper view or a Reanimated animated border)
-- [ ] Smooth **Reanimated expand transition** when sleep starts — the card height animates from normal to expanded; does not jump
-- [ ] When sleep is not active, the card returns to the standard layout from Phase 1
+- [x] **Tappable "Started at HH:MM AM/PM" row** below the timer — tapping opens the `@react-native-community/datetimepicker` in `mode="time"` to allow retroactive correction; on confirm, updates `sleepStartTimestamp` in `TrackerContext` (clamps to max 12h in the past; shows an inline error if out of range)
+- [x] **Large STOP button** — minimum 80px height, full card width, `COLORS.active` background, dashed outer ring (implemented with a `borderStyle: 'dashed'` wrapper view or a Reanimated animated border)
+- [x] Smooth **Reanimated expand transition** when sleep starts — the card height animates from normal to expanded; does not jump
+- [x] When sleep is not active, the card returns to the standard layout from Phase 1
 
 ### Done when
 - Active sleep shows the large HH:MM:SS breakdown

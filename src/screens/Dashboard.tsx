@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { SafeAreaView, View, Text, TouchableOpacity, ScrollView, StyleSheet, Animated, Easing } from 'react-native';
 import { useTracker } from '@context/TrackerContext';
 import { useTheme } from '@hooks/useTheme';
 import { TYPOGRAPHY } from '@theme/colors';
@@ -14,6 +14,7 @@ import { SleepCard } from '../components/cards/SleepCard';
 import { NursingCard } from '../components/cards/NursingCard';
 import { BottleCard } from '../components/cards/BottleCard';
 import { DiaperCard } from '../components/cards/DiaperCard';
+import { ActiveSleepView } from '../components/ActiveSleepView';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -173,6 +174,7 @@ export const Dashboard: React.FC = () => {
           backgroundColor: COLORS.surface,
           borderBottomWidth: 1,
           borderBottomColor: COLORS.border,
+          overflow: 'hidden',
         },
         feedRow: {
           flexDirection: 'row',
@@ -217,6 +219,25 @@ export const Dashboard: React.FC = () => {
   const [feedModalTab, setFeedModalTab] = useState<'nursing' | 'bottle'>('nursing');
 
   const isSleeping = active.sleepStart !== null;
+
+  // Fade between card grid and active sleep view using RN Animated
+  const sleepOpacity = useRef(new Animated.Value(isSleeping ? 1 : 0)).current;
+  const gridOpacity = useRef(new Animated.Value(isSleeping ? 0 : 1)).current;
+
+  useEffect(() => {
+    const config = { duration: 300, easing: Easing.out(Easing.quad), useNativeDriver: true };
+    if (isSleeping) {
+      Animated.parallel([
+        Animated.timing(gridOpacity, { ...config, toValue: 0 }),
+        Animated.timing(sleepOpacity, { ...config, toValue: 1 }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(sleepOpacity, { ...config, toValue: 0 }),
+        Animated.timing(gridOpacity, { ...config, toValue: 1 }),
+      ]).start();
+    }
+  }, [isSleeping, sleepOpacity, gridOpacity]);
 
   // Derive the most recent log of each type from today's log list
   const lastSleepLog = (logs.find(l => l.type === 'sleep') ?? null) as SleepLog | null;
@@ -276,27 +297,38 @@ export const Dashboard: React.FC = () => {
         onSettingsPress={() => setSettingsVisible(true)}
       />
 
-      {/* Tracking cards */}
+      {/* Tracking cards / active sleep */}
       <View style={styles.cardZone}>
-        <SleepCard
-          lastLog={lastSleepLog}
-          sleepStart={active.sleepStart}
-          onPress={handleSleepPress}
-        />
+        {/* Active sleep view — fades in when sleeping */}
+        <Animated.View style={{ opacity: sleepOpacity, display: isSleeping ? 'flex' : 'none' }}>
+          {active.sleepStart !== null && (
+            <ActiveSleepView
+              sleepStart={active.sleepStart}
+              onStop={() => setSleepNotesVisible(true)}
+            />
+          )}
+        </Animated.View>
 
-        <View style={styles.feedRow}>
-          <NursingCard
-            lastLog={lastBreastLog}
-            feedLeftStart={active.feedLeftStart}
-            feedRightStart={active.feedRightStart}
-            feedLeftElapsed={active.feedLeftElapsed}
-            feedRightElapsed={active.feedRightElapsed}
-            onPress={openNursingModal}
+        {/* Card grid — fades in when not sleeping */}
+        <Animated.View style={{ opacity: gridOpacity, display: isSleeping ? 'none' : 'flex' }}>
+          <SleepCard
+            lastLog={lastSleepLog}
+            sleepStart={active.sleepStart}
+            onPress={handleSleepPress}
           />
-          <BottleCard lastLog={lastBottleLog} onPress={openBottleModal} />
-        </View>
-
-        <DiaperCard lastLog={lastDiaperLog} onPress={() => setDiaperModalVisible(true)} />
+          <View style={styles.feedRow}>
+            <NursingCard
+              lastLog={lastBreastLog}
+              feedLeftStart={active.feedLeftStart}
+              feedRightStart={active.feedRightStart}
+              feedLeftElapsed={active.feedLeftElapsed}
+              feedRightElapsed={active.feedRightElapsed}
+              onPress={openNursingModal}
+            />
+            <BottleCard lastLog={lastBottleLog} onPress={openBottleModal} />
+          </View>
+          <DiaperCard lastLog={lastDiaperLog} onPress={() => setDiaperModalVisible(true)} />
+        </Animated.View>
       </View>
 
       {/* Today's log list */}
