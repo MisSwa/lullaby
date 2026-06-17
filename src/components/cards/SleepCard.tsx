@@ -41,58 +41,42 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        card: {
-          backgroundColor: COLORS.surface,
+        shadowWrapper: {
           borderRadius: 16,
-          borderWidth: 1,
-          borderColor: COLORS.border,
+          backgroundColor: COLORS.surface,
           marginBottom: 12,
-          minHeight: 90,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.09,
+          shadowRadius: 10,
+          elevation: 4,
+        },
+        clipWrapper: {
+          borderRadius: 16,
           overflow: 'hidden',
         },
-        strip: {
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 5,
-          backgroundColor: COLORS.sleep,
-        },
-        ghost: {
-          position: 'absolute',
-          left: 12,
-          top: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          opacity: 0.1,
-        },
-        content: {
-          paddingLeft: 64,
-          paddingRight: 16,
-          paddingVertical: 14,
-        },
-        topRow: {
+        headerBand: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
+          paddingHorizontal: 14,
+          paddingVertical: 9,
+          backgroundColor: COLORS.sleep,
         },
-        title: {
-          fontSize: TYPOGRAPHY.size.xs,
+        headerLabel: {
+          fontSize: 11,
           fontWeight: 'bold',
-          color: COLORS.textMuted,
+          color: COLORS.surface,
           textTransform: 'uppercase',
-          letterSpacing: 1,
+          letterSpacing: 1.5,
         },
-        badges: {
+        headerRight: {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 6,
         },
-        bellIcon: {
-          opacity: 0.5,
-        },
         liveBadge: {
-          backgroundColor: COLORS.active,
+          backgroundColor: COLORS.surface,
           borderRadius: 10,
           paddingHorizontal: 8,
           paddingVertical: 3,
@@ -100,14 +84,26 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
         liveBadgeText: {
           fontSize: TYPOGRAPHY.size.xs,
           fontWeight: 'bold',
-          color: COLORS.surface,
+          color: COLORS.sleep,
           fontVariant: ['tabular-nums'],
         },
+        body: {
+          padding: 14,
+          backgroundColor: COLORS.surface,
+        },
+        ghost: {
+          position: 'absolute',
+          right: 10,
+          top: 0,
+          bottom: 0,
+          justifyContent: 'center',
+          opacity: 0.1,
+        },
         timeSince: {
-          fontSize: TYPOGRAPHY.size.base,
-          fontWeight: '600',
+          fontSize: 22,
+          fontWeight: 'bold',
           color: COLORS.textPrimary,
-          marginTop: 4,
+          marginTop: 2,
         },
         detail: {
           fontSize: TYPOGRAPHY.size.sm,
@@ -133,22 +129,13 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
   }
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
-      <View style={styles.strip} />
-      <View style={styles.ghost}>
-        <Ionicons name="moon-outline" size={72} color={COLORS.sleep} />
-      </View>
-      <View style={styles.content}>
-        <View style={styles.topRow}>
-          <Text style={styles.title}>Sleep</Text>
-          <View style={styles.badges}>
+    <TouchableOpacity style={styles.shadowWrapper} onPress={onPress} activeOpacity={0.75}>
+      <View style={styles.clipWrapper}>
+        <View style={styles.headerBand}>
+          <Text style={styles.headerLabel}>Sleep</Text>
+          <View style={styles.headerRight}>
             {notifications.sleep.enabled && (
-              <Ionicons
-                name="notifications-outline"
-                size={16}
-                color={COLORS.sleep}
-                style={styles.bellIcon}
-              />
+              <Ionicons name="notifications-outline" size={16} color={COLORS.surface} />
             )}
             {sleepStart !== null && (
               <View style={styles.liveBadge}>
@@ -157,8 +144,13 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
             )}
           </View>
         </View>
-        <Text style={styles.timeSince}>{timeSinceStr}</Text>
-        <Text style={styles.detail}>{detailStr}</Text>
+        <View style={styles.body}>
+          <View style={styles.ghost}>
+            <Ionicons name="moon-outline" size={88} color={COLORS.sleep} />
+          </View>
+          <Text style={styles.timeSince}>{timeSinceStr}</Text>
+          <Text style={styles.detail}>{detailStr}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );

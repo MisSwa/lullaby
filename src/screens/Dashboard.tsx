@@ -171,10 +171,9 @@ export const Dashboard: React.FC = () => {
           paddingHorizontal: 16,
           paddingTop: 16,
           paddingBottom: 8,
-          backgroundColor: COLORS.surface,
+          backgroundColor: COLORS.background,
           borderBottomWidth: 1,
           borderBottomColor: COLORS.border,
-          overflow: 'hidden',
         },
         feedRow: {
           flexDirection: 'row',

@@ -45,56 +45,52 @@ export const NursingCard: React.FC<NursingCardProps> = ({
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        card: {
+        shadowWrapper: {
           flex: 1,
-          backgroundColor: COLORS.surface,
           borderRadius: 16,
-          borderWidth: 1,
-          borderColor: COLORS.border,
-          minHeight: 90,
+          backgroundColor: COLORS.surface,
+          shadowColor: COLORS.shadow,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.09,
+          shadowRadius: 10,
+          elevation: 4,
+        },
+        clipWrapper: {
+          borderRadius: 16,
           overflow: 'hidden',
         },
-        strip: {
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 5,
+        headerBand: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 14,
+          paddingVertical: 9,
           backgroundColor: COLORS.feed,
+        },
+        headerLabel: {
+          fontSize: 11,
+          fontWeight: 'bold',
+          color: COLORS.surface,
+          textTransform: 'uppercase',
+          letterSpacing: 1.5,
+        },
+        body: {
+          padding: 14,
+          backgroundColor: COLORS.surface,
         },
         ghost: {
           position: 'absolute',
-          left: 8,
+          right: 10,
           top: 0,
           bottom: 0,
           justifyContent: 'center',
           opacity: 0.1,
         },
-        content: {
-          paddingLeft: 56,
-          paddingRight: 12,
-          paddingVertical: 14,
-        },
-        topRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        },
-        title: {
-          fontSize: TYPOGRAPHY.size.xs,
-          fontWeight: 'bold',
-          color: COLORS.textMuted,
-          textTransform: 'uppercase',
-          letterSpacing: 1,
-        },
-        bellIcon: {
-          opacity: 0.5,
-        },
         timeSince: {
-          fontSize: TYPOGRAPHY.size.sm,
+          fontSize: 16,
           fontWeight: '600',
           color: COLORS.textPrimary,
-          marginTop: 4,
+          marginTop: 2,
         },
         detail: {
           fontSize: TYPOGRAPHY.size.xs,
@@ -127,25 +123,21 @@ export const NursingCard: React.FC<NursingCardProps> = ({
   }
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
-      <View style={styles.strip} />
-      <View style={styles.ghost}>
-        <Ionicons name="heart-outline" size={60} color={COLORS.feed} />
-      </View>
-      <View style={styles.content}>
-        <View style={styles.topRow}>
-          <Text style={styles.title}>Nursing</Text>
+    <TouchableOpacity style={styles.shadowWrapper} onPress={onPress} activeOpacity={0.75}>
+      <View style={styles.clipWrapper}>
+        <View style={styles.headerBand}>
+          <Text style={styles.headerLabel}>Nursing</Text>
           {notifications.feed.enabled && (
-            <Ionicons
-              name="notifications-outline"
-              size={14}
-              color={COLORS.feed}
-              style={styles.bellIcon}
-            />
+            <Ionicons name="notifications-outline" size={14} color={COLORS.surface} />
           )}
         </View>
-        <Text style={styles.timeSince}>{timeSinceStr}</Text>
-        <Text style={styles.detail}>{detailStr}</Text>
+        <View style={styles.body}>
+          <View style={styles.ghost}>
+            <Ionicons name="heart-outline" size={68} color={COLORS.feed} />
+          </View>
+          <Text style={styles.timeSince}>{timeSinceStr}</Text>
+          <Text style={styles.detail}>{detailStr}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
