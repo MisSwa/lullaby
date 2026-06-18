@@ -42,17 +42,17 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
     () =>
       StyleSheet.create({
         shadowWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           backgroundColor: COLORS.surface,
-          marginBottom: 12,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.09,
-          shadowRadius: 10,
-          elevation: 4,
+          marginBottom: 8,
+          shadowColor: COLORS.sleep,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.20,
+          shadowRadius: 16,
+          elevation: 6,
         },
         clipWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           overflow: 'hidden',
         },
         headerBand: {
@@ -60,7 +60,7 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 14,
-          paddingVertical: 9,
+          paddingVertical: 13,
           backgroundColor: COLORS.sleep,
         },
         headerLabel: {
@@ -68,7 +68,7 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
           fontWeight: 'bold',
           color: COLORS.surface,
           textTransform: 'uppercase',
-          letterSpacing: 1.5,
+          letterSpacing: 1.8,
         },
         headerRight: {
           flexDirection: 'row',
@@ -89,15 +89,13 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
         },
         body: {
           padding: 14,
-          backgroundColor: COLORS.surface,
+          backgroundColor: `${COLORS.sleep}12`,
         },
         ghost: {
           position: 'absolute',
-          right: 10,
-          top: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          opacity: 0.1,
+          right: -8,
+          bottom: -8,
+          opacity: 0.15,
         },
         timeSince: {
           fontSize: 22,
@@ -161,7 +159,7 @@ export const SleepCard: React.FC<SleepCardProps> = ({ lastLog, sleepStart, onPre
           </View>
           <View style={styles.body}>
             <View style={styles.ghost}>
-              <Ionicons name="moon-outline" size={88} color={COLORS.sleep} />
+              <Ionicons name="moon" size={100} color={COLORS.sleep} />
             </View>
             <Text style={styles.timeSince}>{timeSinceStr}</Text>
             <Text style={styles.detail}>{detailStr}</Text>

@@ -14,10 +14,10 @@ interface NudgeSheetProps {
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const ICON_MAP: Record<NudgeSheetProps['logType'], IoniconName> = {
-  sleep: 'moon-outline',
-  feed: 'restaurant-outline',
-  diaper: 'water-outline',
-  solids: 'leaf-outline',
+  sleep: 'moon',
+  feed: 'restaurant',
+  diaper: 'water',
+  solids: 'leaf',
 };
 
 function titleForType(logType: NudgeSheetProps['logType']): string {
@@ -42,7 +42,7 @@ export const NudgeSheet: React.FC<NudgeSheetProps> = ({
       case 'sleep': return COLORS.sleep;
       case 'feed': return COLORS.feed;
       case 'diaper': return COLORS.diaper;
-      case 'solids': return COLORS.feed;
+      case 'solids': return COLORS.solids;
     }
   };
 

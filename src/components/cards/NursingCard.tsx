@@ -46,16 +46,16 @@ export const NursingCard: React.FC<NursingCardProps> = ({
     () =>
       StyleSheet.create({
         shadowWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           backgroundColor: COLORS.surface,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.09,
-          shadowRadius: 10,
-          elevation: 4,
+          shadowColor: COLORS.nursing,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.20,
+          shadowRadius: 16,
+          elevation: 6,
         },
         clipWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           overflow: 'hidden',
         },
         headerBand: {
@@ -63,31 +63,29 @@ export const NursingCard: React.FC<NursingCardProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 14,
-          paddingVertical: 9,
-          backgroundColor: COLORS.feed,
+          paddingVertical: 13,
+          backgroundColor: COLORS.nursing,
         },
         headerLabel: {
           fontSize: 11,
           fontWeight: 'bold',
           color: COLORS.surface,
           textTransform: 'uppercase',
-          letterSpacing: 1.5,
+          letterSpacing: 1.8,
         },
         body: {
           padding: 14,
-          backgroundColor: COLORS.surface,
+          backgroundColor: `${COLORS.nursing}12`,
         },
         ghost: {
           position: 'absolute',
-          right: 10,
-          top: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          opacity: 0.1,
+          right: -8,
+          bottom: -8,
+          opacity: 0.15,
         },
         timeSince: {
-          fontSize: 16,
-          fontWeight: '600',
+          fontSize: 18,
+          fontWeight: '700',
           color: COLORS.textPrimary,
           marginTop: 2,
         },
@@ -142,12 +140,12 @@ export const NursingCard: React.FC<NursingCardProps> = ({
           <View style={styles.headerBand}>
             <Text style={styles.headerLabel}>Nursing</Text>
             {notifications.feed.enabled && (
-              <Ionicons name="notifications-outline" size={14} color={COLORS.surface} />
+              <Ionicons name="notifications" size={14} color={COLORS.surface} />
             )}
           </View>
           <View style={styles.body}>
             <View style={styles.ghost}>
-              <Ionicons name="heart-outline" size={68} color={COLORS.feed} />
+              <Ionicons name="heart" size={76} color={COLORS.nursing} />
             </View>
             <Text style={styles.timeSince}>{timeSinceStr}</Text>
             <Text style={styles.detail}>{detailStr}</Text>

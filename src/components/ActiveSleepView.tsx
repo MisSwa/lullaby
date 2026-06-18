@@ -19,9 +19,11 @@ const MAX_RETROACTIVE_MS = 12 * 60 * 60 * 1000;
 interface ActiveSleepViewProps {
   sleepStart: number;
   onStop: () => void;
+  onDiscard: () => void;
+  onMinimize: () => void;
 }
 
-export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, onStop }) => {
+export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, onStop, onDiscard, onMinimize }) => {
   const COLORS = useTheme();
   const { notifications, timeFormat } = useSettings();
   const { updateSleepStart } = useTracker();
@@ -56,8 +58,16 @@ export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, on
           textTransform: 'uppercase',
           letterSpacing: 1,
         },
+        topRight: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        },
         bellIcon: {
           opacity: 0.5,
+        },
+        minimizeButton: {
+          padding: 4,
         },
         timerRow: {
           flexDirection: 'row',
@@ -147,6 +157,16 @@ export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, on
           fontWeight: 'bold',
           color: COLORS.surface,
         },
+        discardButton: {
+          marginHorizontal: 20,
+          marginTop: 14,
+          paddingVertical: 8,
+          alignItems: 'center',
+        },
+        discardText: {
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.error,
+        },
       }),
     [COLORS],
   );
@@ -178,14 +198,23 @@ export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, on
       {/* Top label */}
       <View style={styles.topRow}>
         <Text style={styles.categoryLabel}>Sleep · Active</Text>
-        {notifications.sleep.enabled && (
-          <Ionicons
-            name="notifications-outline"
-            size={16}
-            color={COLORS.sleep}
-            style={styles.bellIcon}
-          />
-        )}
+        <View style={styles.topRight}>
+          {notifications.sleep.enabled && (
+            <Ionicons
+              name="notifications-outline"
+              size={16}
+              color={COLORS.sleep}
+              style={styles.bellIcon}
+            />
+          )}
+          <TouchableOpacity
+            style={styles.minimizeButton}
+            onPress={onMinimize}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="chevron-down" size={20} color={COLORS.textMuted} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* HH : MM : SS display */}
@@ -243,6 +272,11 @@ export const ActiveSleepView: React.FC<ActiveSleepViewProps> = ({ sleepStart, on
           <Text style={styles.stopText}>Stop Sleep</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Discard — baby woke up before falling asleep */}
+      <TouchableOpacity style={styles.discardButton} onPress={onDiscard}>
+        <Text style={styles.discardText}>Discard session</Text>
+      </TouchableOpacity>
     </View>
   );
 };

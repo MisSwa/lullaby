@@ -8,7 +8,10 @@ export interface ColorPalette {
   textMuted: string;
   border: string;
   sleep: string;
-  feed: string;
+  feed: string;      // generic feed fallback (NudgeSheet, log list)
+  nursing: string;   // breast feeding card
+  bottle: string;    // bottle feeding card
+  solids: string;    // solids card
   diaper: string;
   active: string;
   error: string;
@@ -18,39 +21,45 @@ export interface ColorPalette {
 }
 
 export const LIGHT: ColorPalette = {
-  primary: '#6366F1',       // Electric Indigo
-  primaryLight: '#E0E7FF',  // Light indigo tint
-  background: '#F8FAFC',    // Crisp off-white
+  primary: '#7C3AED',       // Deep Violet — premium CTA; 5.3:1 vs white (WCAG AA)
+  primaryLight: '#EDE9FE',  // Violet-100 tint
+  background: '#FAFAF8',    // Warm off-white (cream undertone)
   surface: '#FFFFFF',        // Pure white cards
-  surfaceAlt: '#EEF2FF',    // Indigo-tinted header
-  textPrimary: '#111827',   // Near-black
-  textMuted: '#6B7280',     // Neutral gray
-  border: '#E5E7EB',        // Subtle divider
+  surfaceAlt: '#F5F3FF',    // Violet-50 — premium header tint
+  textPrimary: '#18181B',   // Zinc-900 warm near-black
+  textMuted: '#71717A',     // Zinc-500
+  border: '#E4E4E7',        // Zinc-200
 
-  sleep: '#8B5CF6',         // Vivid Violet
-  feed: '#F97316',          // Vivid Orange
-  diaper: '#0EA5E9',        // Sky Blue
-  active: '#22C55E',        // Bright Green
-  error: '#EF4444',
-  success: '#22C55E',
+  sleep: '#1D4ED8',         // Bold Blue — night, stars, calm; 6.0:1 vs white
+  feed: '#C2410C',          // Generic feed (NudgeSheet fallback / log list)
+  nursing: '#BE185D',       // Deep Rose — intimate, warm; 5.9:1 vs white
+  bottle: '#C2410C',        // Burnt Orange — warm liquid; 4.8:1 vs white
+  solids: '#166534',        // Dark Forest Green — natural food; 7.2:1 vs white
+  diaper: '#0F766E',        // Rich Teal — clean, fresh; 4.9:1 vs white
+  active: '#16A34A',        // Forest Green — running timer state only
+  error: '#DC2626',
+  success: '#16A34A',
   shadow: '#000000',
   overlay: 'rgba(0,0,0,0.4)',
 };
 
 export const DARK: ColorPalette = {
-  primary: '#818CF8',       // Lighter indigo for dark bg
-  primaryLight: '#312E81',  // Dark indigo
+  primary: '#A78BFA',       // Violet-400
+  primaryLight: '#2E1065',  // Violet-950
   background: '#0F172A',    // Very dark navy
   surface: '#1E293B',       // Dark slate card
-  surfaceAlt: '#1E1B4B',   // Dark indigo header
+  surfaceAlt: '#1E1B4B',    // Dark violet header
   textPrimary: '#F1F5F9',  // Near-white
   textMuted: '#94A3B8',    // Muted slate
   border: '#334155',        // Dark border
 
-  sleep: '#A78BFA',         // Lighter violet
-  feed: '#FB923C',          // Lighter orange
-  diaper: '#38BDF8',        // Lighter sky blue
-  active: '#4ADE80',        // Lighter green
+  sleep: '#60A5FA',         // Blue-400
+  feed: '#FB923C',          // Orange-400 (fallback)
+  nursing: '#F472B6',       // Pink-400
+  bottle: '#FB923C',        // Orange-400
+  solids: '#34D399',        // Emerald-400
+  diaper: '#2DD4BF',        // Teal-400
+  active: '#4ADE80',        // Green-400
   error: '#FC8181',
   success: '#4ADE80',
   shadow: '#000000',

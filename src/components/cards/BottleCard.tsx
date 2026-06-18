@@ -27,16 +27,16 @@ export const BottleCard: React.FC<BottleCardProps> = ({ lastLog, onPress }) => {
     () =>
       StyleSheet.create({
         shadowWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           backgroundColor: COLORS.surface,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.09,
-          shadowRadius: 10,
-          elevation: 4,
+          shadowColor: COLORS.bottle,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.20,
+          shadowRadius: 16,
+          elevation: 6,
         },
         clipWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           overflow: 'hidden',
         },
         headerBand: {
@@ -44,31 +44,29 @@ export const BottleCard: React.FC<BottleCardProps> = ({ lastLog, onPress }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 14,
-          paddingVertical: 9,
-          backgroundColor: COLORS.feed,
+          paddingVertical: 13,
+          backgroundColor: COLORS.bottle,
         },
         headerLabel: {
           fontSize: 11,
           fontWeight: 'bold',
           color: COLORS.surface,
           textTransform: 'uppercase',
-          letterSpacing: 1.5,
+          letterSpacing: 1.8,
         },
         body: {
           padding: 14,
-          backgroundColor: COLORS.surface,
+          backgroundColor: `${COLORS.bottle}12`,
         },
         ghost: {
           position: 'absolute',
-          right: 10,
-          top: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          opacity: 0.1,
+          right: -8,
+          bottom: -8,
+          opacity: 0.15,
         },
         timeSince: {
-          fontSize: 16,
-          fontWeight: '600',
+          fontSize: 18,
+          fontWeight: '700',
           color: COLORS.textPrimary,
           marginTop: 2,
         },
@@ -109,12 +107,12 @@ export const BottleCard: React.FC<BottleCardProps> = ({ lastLog, onPress }) => {
           <View style={styles.headerBand}>
             <Text style={styles.headerLabel}>Bottle</Text>
             {notifications.feed.enabled && (
-              <Ionicons name="notifications-outline" size={14} color={COLORS.surface} />
+              <Ionicons name="notifications" size={14} color={COLORS.surface} />
             )}
           </View>
           <View style={styles.body}>
             <View style={styles.ghost}>
-              <MaterialCommunityIcons name="baby-bottle-outline" size={60} color={COLORS.feed} />
+              <MaterialCommunityIcons name="baby-bottle" size={76} color={COLORS.bottle} />
             </View>
             <Text style={styles.timeSince}>{timeSinceStr}</Text>
             <Text style={styles.detail}>{detailStr}</Text>

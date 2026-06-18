@@ -10,7 +10,7 @@ import {
   DiaperLog,
   NotificationType,
 } from '../types/tracker';
-import { fetchBabies, fetchLogsForBaby, insertLog, deleteLog, createBaby, updateBaby } from '@services/db';
+import { fetchBabies, fetchLogsForBaby, fetchSolidsHistory, insertLog, deleteLog, createBaby, updateBaby } from '@services/db';
 import { useSettings } from '@context/SettingsContext';
 import { useNotifications } from '@hooks/useNotifications';
 
@@ -22,12 +22,20 @@ interface TrackerContextType {
   active: ActiveTrackers;
   refreshLogs: () => Promise<void>;
   startSleep: () => void;
-  stopSleep: (notes?: string) => Promise<void>;
+  cancelSleep: () => void;
+  stopSleep: (notes?: string, endTime?: number) => Promise<void>;
   toggleBreastFeed: (side: 'left' | 'right') => void;
-  saveBreastFeed: (notes?: string) => Promise<void>;
-  logBottle: (amountMl: number, notes?: string) => Promise<void>;
-  logSolids: (notes?: string) => Promise<void>;
+  adjustFeedStart: (deltaMs: number) => void;
+  saveBreastFeed: (notes?: string, timestamp?: number) => Promise<void>;
+  logBottle: (amountMl: number, notes?: string, timestamp?: number) => Promise<void>;
+  logSolids: (notes?: string, timestamp?: number) => Promise<void>;
   logDiaper: (status: 'wet' | 'dirty' | 'mixed' | 'dry', notes?: string, timestamp?: number) => Promise<void>;
+  solidsFoodHistory: string[];
+  historyLogs: BabyLog[];
+  historyDate: number | null;
+  loadHistoryDate: (dateMs: number) => Promise<void>;
+  clearHistory: () => void;
+  logBreastFeedManual: (leftSecs: number, rightSecs: number, timestamp: number, notes?: string) => Promise<void>;
   removeLog: (id: string) => Promise<void>;
   createBaby: (name: string, dob: number) => Promise<void>;
   updateBaby: (id: string, name: string, dob: number) => Promise<void>;
@@ -75,6 +83,9 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [activeBabyId, setActiveBabyId] = useState<string | null>(null);
   const [logs, setLogs] = useState<BabyLog[]>([]);
   const [active, setActive] = useState<ActiveTrackers>(INITIAL_ACTIVE);
+  const [solidsFoodHistory, setSolidsFoodHistory] = useState<string[]>([]);
+  const [historyLogs, setHistoryLogs] = useState<BabyLog[]>([]);
+  const [historyDate, setHistoryDate] = useState<number | null>(null);
   const hasSetInitialBaby = useRef(false);
 
   useEffect(() => {
@@ -103,9 +114,36 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [db, activeBabyId]);
 
+  const loadSolidsHistory = useCallback(async (): Promise<void> => {
+    if (!activeBabyId) return;
+    const history = await fetchSolidsHistory(db, activeBabyId);
+    setSolidsFoodHistory(history);
+  }, [db, activeBabyId]);
+
+  const loadHistoryDate = useCallback(async (dateMs: number): Promise<void> => {
+    if (!activeBabyId) return;
+    try {
+      const d = new Date(dateMs);
+      d.setHours(0, 0, 0, 0);
+      const startMs = d.getTime();
+      const endMs = startMs + 24 * 60 * 60 * 1000 - 1;
+      const fetched = await fetchLogsForBaby(db, activeBabyId, startMs, endMs);
+      setHistoryLogs(fetched);
+      setHistoryDate(dateMs);
+    } catch (error) {
+      console.error('Failed to load history logs:', error);
+    }
+  }, [db, activeBabyId]);
+
+  const clearHistory = useCallback((): void => {
+    setHistoryLogs([]);
+    setHistoryDate(null);
+  }, []);
+
   useEffect(() => {
     refreshLogs();
-  }, [refreshLogs]);
+    loadSolidsHistory();
+  }, [refreshLogs, loadSolidsHistory]);
 
   // ─── Notification helpers ────────────────────────────────────────────────────
 
@@ -179,6 +217,10 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setActive(prev => ({ ...prev, sleepStart: Date.now() }));
   };
 
+  const cancelSleep = (): void => {
+    setActive(prev => ({ ...prev, sleepStart: null }));
+  };
+
   const MAX_SLEEP_RETROACTIVE_MS = 12 * 60 * 60 * 1000;
 
   const updateSleepStart = (timestamp: number): void => {
@@ -189,14 +231,14 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setActive(prev => ({ ...prev, sleepStart: timestamp }));
   };
 
-  const stopSleep = async (notes = ''): Promise<void> => {
+  const stopSleep = async (notes = '', endTime?: number): Promise<void> => {
     if (!active.sleepStart || !activeBabyId) return;
     const log: SleepLog = {
       id: Crypto.randomUUID(),
       babyId: activeBabyId,
       type: 'sleep',
       timestamp: active.sleepStart,
-      endTime: Date.now(),
+      endTime: endTime ?? Date.now(),
       notes,
     };
     try {
@@ -211,6 +253,28 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // ─── Breast Feed ─────────────────────────────────────────────────────────────
+
+  // Shift the active side's start timestamp back by deltaMs so useLiveTick
+  // reflects the retroactive start the user set in the nursing time picker.
+  const adjustFeedStart = (deltaMs: number): void => {
+    if (deltaMs <= 0) return;
+    setActive(prev => {
+      if (prev.feedLeftStart !== null) {
+        return { ...prev, feedLeftStart: prev.feedLeftStart - deltaMs };
+      }
+      if (prev.feedRightStart !== null) {
+        return { ...prev, feedRightStart: prev.feedRightStart - deltaMs };
+      }
+      // No side running but user has accumulated time — add to the larger side
+      if (prev.feedLeftElapsed > 0 || prev.feedRightElapsed > 0) {
+        const extraSecs = Math.floor(deltaMs / 1000);
+        return prev.feedLeftElapsed >= prev.feedRightElapsed
+          ? { ...prev, feedLeftElapsed: prev.feedLeftElapsed + extraSecs }
+          : { ...prev, feedRightElapsed: prev.feedRightElapsed + extraSecs };
+      }
+      return prev;
+    });
+  };
 
   const toggleBreastFeed = (side: 'left' | 'right'): void => {
     const now = Date.now();
@@ -249,7 +313,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const saveBreastFeed = async (notes = ''): Promise<void> => {
+  const saveBreastFeed = async (notes = '', timestamp?: number): Promise<void> => {
     if (!activeBabyId) return;
     const now = Date.now();
     const finalLeft =
@@ -264,7 +328,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
       babyId: activeBabyId,
       type: 'feed',
       feedType: 'breast',
-      timestamp: now,
+      timestamp: timestamp ?? now,
       leftDuration: finalLeft,
       rightDuration: finalRight,
       amountMl: 0,
@@ -287,16 +351,45 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  // Log a nursing session that was not tracked live (user enters durations manually)
+  const logBreastFeedManual = async (
+    leftSecs: number,
+    rightSecs: number,
+    timestamp: number,
+    notes = '',
+  ): Promise<void> => {
+    if (!activeBabyId || (leftSecs < 1 && rightSecs < 1)) return;
+    const log: FeedLog = {
+      id: Crypto.randomUUID(),
+      babyId: activeBabyId,
+      type: 'feed',
+      feedType: 'breast',
+      timestamp,
+      leftDuration: leftSecs,
+      rightDuration: rightSecs,
+      amountMl: 0,
+      notes,
+    };
+    try {
+      await insertLog(db, log);
+      await refreshLogs();
+      await afterInsert(log, babies);
+    } catch (error) {
+      console.error('Failed to log manual breast feed:', error);
+      throw error;
+    }
+  };
+
   // ─── Bottle & Solids ─────────────────────────────────────────────────────────
 
-  const logBottle = async (amountMl: number, notes?: string): Promise<void> => {
+  const logBottle = async (amountMl: number, notes?: string, timestamp?: number): Promise<void> => {
     if (!activeBabyId || amountMl < 1) return;
     const log: FeedLog = {
       id: Crypto.randomUUID(),
       babyId: activeBabyId,
       type: 'feed',
       feedType: 'bottle',
-      timestamp: Date.now(),
+      timestamp: timestamp ?? Date.now(),
       leftDuration: 0,
       rightDuration: 0,
       amountMl,
@@ -312,14 +405,14 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const logSolids = async (notes?: string): Promise<void> => {
+  const logSolids = async (notes?: string, timestamp?: number): Promise<void> => {
     if (!activeBabyId) return;
     const log: FeedLog = {
       id: Crypto.randomUUID(),
       babyId: activeBabyId,
       type: 'feed',
       feedType: 'solids',
-      timestamp: Date.now(),
+      timestamp: timestamp ?? Date.now(),
       leftDuration: 0,
       rightDuration: 0,
       amountMl: 0,
@@ -328,6 +421,7 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       await insertLog(db, log);
       await refreshLogs();
+      await loadSolidsHistory();
       await afterInsert(log, babies);
     } catch (error) {
       console.error('Failed to log solids:', error);
@@ -367,12 +461,20 @@ export const TrackerProvider: React.FC<{ children: React.ReactNode }> = ({ child
         active,
         refreshLogs,
         startSleep,
+        cancelSleep,
         stopSleep,
         toggleBreastFeed,
+        adjustFeedStart,
         saveBreastFeed,
         logBottle,
         logSolids,
         logDiaper,
+        solidsFoodHistory,
+        historyLogs,
+        historyDate,
+        loadHistoryDate,
+        clearHistory,
+        logBreastFeedManual,
         removeLog,
         createBaby: handleCreateBaby,
         updateBaby: handleUpdateBaby,

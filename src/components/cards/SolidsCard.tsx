@@ -33,17 +33,17 @@ export const SolidsCard: React.FC<SolidsCardProps> = ({ lastLog, onPress, onLong
     () =>
       StyleSheet.create({
         shadowWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           backgroundColor: COLORS.surface,
-          marginBottom: 12,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.09,
-          shadowRadius: 10,
-          elevation: 4,
+          marginBottom: 8,
+          shadowColor: COLORS.solids,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.20,
+          shadowRadius: 16,
+          elevation: 6,
         },
         clipWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           overflow: 'hidden',
         },
         headerBand: {
@@ -51,27 +51,25 @@ export const SolidsCard: React.FC<SolidsCardProps> = ({ lastLog, onPress, onLong
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 14,
-          paddingVertical: 9,
-          backgroundColor: COLORS.feed,
+          paddingVertical: 13,
+          backgroundColor: COLORS.solids,
         },
         headerLabel: {
           fontSize: 11,
           fontWeight: 'bold',
           color: COLORS.surface,
           textTransform: 'uppercase',
-          letterSpacing: 1.5,
+          letterSpacing: 1.8,
         },
         body: {
           padding: 14,
-          backgroundColor: COLORS.surface,
+          backgroundColor: `${COLORS.solids}12`,
         },
         ghost: {
           position: 'absolute',
-          right: 10,
-          top: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          opacity: 0.1,
+          right: -8,
+          bottom: -8,
+          opacity: 0.15,
         },
         timeSince: {
           fontSize: 22,
@@ -89,7 +87,23 @@ export const SolidsCard: React.FC<SolidsCardProps> = ({ lastLog, onPress, onLong
   );
 
   const timeSinceStr = timeSince(lastLog?.timestamp ?? null, now);
-  const detailStr = lastLog ? (lastLog.notes.length > 0 ? lastLog.notes : 'logged') : '–';
+  const detailStr = useMemo((): string => {
+    if (!lastLog) return '–';
+    try {
+      const parsed = JSON.parse(lastLog.notes) as { items?: Array<{ food: string; amount: string }> };
+      if (parsed.items && Array.isArray(parsed.items)) {
+        const foods = parsed.items
+          .filter(i => i.food.trim())
+          .map(i => i.food.trim());
+        return foods.length > 0 ? foods.join(', ') : 'logged';
+      }
+    } catch {
+      // old plain-text format
+      const first = lastLog.notes.split('\n')[0].trim();
+      return first.length > 0 ? first : 'logged';
+    }
+    return 'logged';
+  }, [lastLog]);
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
@@ -108,7 +122,7 @@ export const SolidsCard: React.FC<SolidsCardProps> = ({ lastLog, onPress, onLong
           </View>
           <View style={styles.body}>
             <View style={styles.ghost}>
-              <Ionicons name="leaf-outline" size={88} color={COLORS.feed} />
+              <Ionicons name="leaf" size={100} color={COLORS.solids} />
             </View>
             <Text style={styles.timeSince}>{timeSinceStr}</Text>
             <Text style={styles.detail}>{detailStr}</Text>

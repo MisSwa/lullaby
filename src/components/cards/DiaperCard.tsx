@@ -26,17 +26,17 @@ export const DiaperCard: React.FC<DiaperCardProps> = ({ lastLog, onPress }) => {
     () =>
       StyleSheet.create({
         shadowWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           backgroundColor: COLORS.surface,
-          marginBottom: 12,
-          shadowColor: COLORS.shadow,
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.09,
-          shadowRadius: 10,
-          elevation: 4,
+          marginBottom: 8,
+          shadowColor: COLORS.diaper,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.20,
+          shadowRadius: 16,
+          elevation: 6,
         },
         clipWrapper: {
-          borderRadius: 16,
+          borderRadius: 20,
           overflow: 'hidden',
         },
         headerBand: {
@@ -44,7 +44,7 @@ export const DiaperCard: React.FC<DiaperCardProps> = ({ lastLog, onPress }) => {
           alignItems: 'center',
           justifyContent: 'space-between',
           paddingHorizontal: 14,
-          paddingVertical: 9,
+          paddingVertical: 13,
           backgroundColor: COLORS.diaper,
         },
         headerLabel: {
@@ -52,19 +52,17 @@ export const DiaperCard: React.FC<DiaperCardProps> = ({ lastLog, onPress }) => {
           fontWeight: 'bold',
           color: COLORS.surface,
           textTransform: 'uppercase',
-          letterSpacing: 1.5,
+          letterSpacing: 1.8,
         },
         body: {
           padding: 14,
-          backgroundColor: COLORS.surface,
+          backgroundColor: `${COLORS.diaper}12`,
         },
         ghost: {
           position: 'absolute',
-          right: 10,
-          top: 0,
-          bottom: 0,
-          justifyContent: 'center',
-          opacity: 0.1,
+          right: -8,
+          bottom: -8,
+          opacity: 0.15,
         },
         timeSince: {
           fontSize: 22,
@@ -114,7 +112,7 @@ export const DiaperCard: React.FC<DiaperCardProps> = ({ lastLog, onPress }) => {
           </View>
           <View style={styles.body}>
             <View style={styles.ghost}>
-              <Ionicons name="water-outline" size={88} color={COLORS.diaper} />
+              <Ionicons name="water" size={100} color={COLORS.diaper} />
             </View>
             <Text style={styles.timeSince}>{timeSinceStr}</Text>
             <Text style={styles.detail}>{detailStr}</Text>

@@ -2,8 +2,11 @@ import React, { useMemo, useState } from 'react';
 import {
   Modal,
   SafeAreaView,
+  ScrollView,
+  KeyboardAvoidingView,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   Platform,
@@ -17,7 +20,7 @@ import { DiaperLog } from '../types/tracker';
 
 interface DiaperModalProps {
   visible: boolean;
-  onSave: (status: DiaperLog['status'], timestamp: number) => Promise<void>;
+  onSave: (status: DiaperLog['status'], timestamp: number, notes: string) => Promise<void>;
   onDismiss: () => void;
 }
 
@@ -37,113 +40,24 @@ const DIAPER_OPTIONS: DiapOption[] = [
   { status: 'dry', label: 'Dry', icon: 'ban-outline', dimmed: true },
 ];
 
-const MAX_RETROACTIVE_MS = 12 * 60 * 60 * 1000; // 12 hours
+const MAX_RETROACTIVE_MS = 12 * 60 * 60 * 1000;
 
 export const DiaperModal: React.FC<DiaperModalProps> = ({ visible, onSave, onDismiss }) => {
   const COLORS = useTheme();
   const { timeFormat } = useSettings();
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        root: {
-          flex: 1,
-          backgroundColor: COLORS.background,
-        },
-        header: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 24,
-          paddingVertical: 18,
-          borderBottomWidth: 1,
-          borderBottomColor: COLORS.border,
-          backgroundColor: COLORS.surface,
-        },
-        headerTitle: {
-          fontSize: TYPOGRAPHY.size.lg,
-          fontWeight: 'bold',
-          color: COLORS.textPrimary,
-        },
-        closeButton: {
-          width: 44,
-          height: 44,
-          justifyContent: 'center',
-          alignItems: 'center',
-        },
-        closeText: {
-          fontSize: TYPOGRAPHY.size.lg,
-          color: COLORS.textMuted,
-        },
-        body: {
-          flex: 1,
-          paddingHorizontal: 24,
-          paddingTop: 28,
-        },
-        startedRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingVertical: 14,
-          borderBottomWidth: 1,
-          borderBottomColor: COLORS.border,
-          marginBottom: 32,
-        },
-        startedLabel: {
-          fontSize: TYPOGRAPHY.size.sm,
-          color: COLORS.textMuted,
-        },
-        startedValue: {
-          fontSize: TYPOGRAPHY.size.base,
-          fontWeight: '600',
-          color: COLORS.primary,
-        },
-        errorText: {
-          fontSize: TYPOGRAPHY.size.sm,
-          color: COLORS.error,
-          marginTop: -24,
-          marginBottom: 20,
-        },
-        grid: {
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: 20,
-          justifyContent: 'center',
-        },
-        cell: {
-          width: '44%',
-          alignItems: 'center',
-          marginBottom: 8,
-        },
-        circle: {
-          width: 100,
-          height: 100,
-          borderRadius: 50,
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginBottom: 10,
-        },
-        circleLabel: {
-          fontSize: TYPOGRAPHY.size.sm,
-          fontWeight: '600',
-          color: COLORS.textPrimary,
-        },
-        pickerWrapper: {
-          marginBottom: 12,
-        },
-      }),
-    [COLORS],
-  );
 
   const [startTimestamp, setStartTimestamp] = useState<number>(Date.now());
   const [showPicker, setShowPicker] = useState(false);
   const [timeError, setTimeError] = useState('');
+  const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Reset state when modal opens
   const handleShow = (): void => {
     setStartTimestamp(Date.now());
     setTimeError('');
+    setNotes('');
     setSaving(false);
+    setShowPicker(false);
   };
 
   const handleTimeChange = (_event: DateTimePickerEvent, selected?: Date): void => {
@@ -167,7 +81,7 @@ export const DiaperModal: React.FC<DiaperModalProps> = ({ visible, onSave, onDis
     if (saving) return;
     setSaving(true);
     try {
-      await onSave(status, startTimestamp);
+      await onSave(status, startTimestamp, notes.trim());
     } catch (error) {
       console.error('DiaperModal: failed to save:', error);
       setSaving(false);
@@ -179,6 +93,82 @@ export const DiaperModal: React.FC<DiaperModalProps> = ({ visible, onSave, onDis
     minute: '2-digit',
     hour12: timeFormat === '12h',
   });
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        root: { flex: 1, backgroundColor: COLORS.background },
+        flex: { flex: 1 },
+        header: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 24,
+          paddingVertical: 18,
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+          backgroundColor: COLORS.surface,
+        },
+        headerTitle: {
+          fontSize: TYPOGRAPHY.size.lg,
+          fontWeight: 'bold',
+          color: COLORS.textPrimary,
+        },
+        closeButton: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
+        closeText: { fontSize: TYPOGRAPHY.size.lg, color: COLORS.textMuted },
+        body: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 24 },
+        startedRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+          marginBottom: 20,
+        },
+        startedLabel: { fontSize: TYPOGRAPHY.size.sm, color: COLORS.textMuted },
+        startedValue: { fontSize: TYPOGRAPHY.size.base, fontWeight: '600', color: COLORS.primary },
+        errorText: {
+          fontSize: TYPOGRAPHY.size.sm,
+          color: COLORS.error,
+          marginTop: -12,
+          marginBottom: 16,
+        },
+        pickerWrapper: { marginBottom: 12 },
+        notesInput: {
+          height: 48,
+          borderWidth: 1,
+          borderColor: COLORS.border,
+          borderRadius: 12,
+          paddingHorizontal: 14,
+          fontSize: TYPOGRAPHY.size.base,
+          color: COLORS.textPrimary,
+          backgroundColor: COLORS.surface,
+          marginBottom: 28,
+        },
+        grid: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 20,
+          justifyContent: 'center',
+        },
+        cell: { width: '44%', alignItems: 'center', marginBottom: 8 },
+        circle: {
+          width: 100,
+          height: 100,
+          borderRadius: 50,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 10,
+        },
+        circleLabel: {
+          fontSize: TYPOGRAPHY.size.sm,
+          fontWeight: '600',
+          color: COLORS.textPrimary,
+        },
+      }),
+    [COLORS],
+  );
 
   return (
     <Modal
@@ -196,53 +186,69 @@ export const DiaperModal: React.FC<DiaperModalProps> = ({ visible, onSave, onDis
           </TouchableOpacity>
         </View>
 
-        <View style={styles.body}>
-          {/* Started at row */}
-          <TouchableOpacity
-            style={styles.startedRow}
-            onPress={() => setShowPicker(true)}
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView
+            contentContainerStyle={styles.body}
+            keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.startedLabel}>Started at</Text>
-            <Text style={styles.startedValue}>Today, {formattedTime}</Text>
-          </TouchableOpacity>
+            {/* When row */}
+            <TouchableOpacity
+              style={styles.startedRow}
+              onPress={() => setShowPicker(true)}
+            >
+              <Text style={styles.startedLabel}>When</Text>
+              <Text style={styles.startedValue}>Today, {formattedTime} ›</Text>
+            </TouchableOpacity>
 
-          {timeError.length > 0 && <Text style={styles.errorText}>{timeError}</Text>}
+            {timeError.length > 0 && <Text style={styles.errorText}>{timeError}</Text>}
 
-          {showPicker && (
-            <View style={styles.pickerWrapper}>
-              <DateTimePicker
-                value={new Date(startTimestamp)}
-                mode="time"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                maximumDate={new Date()}
-                minimumDate={new Date(Date.now() - MAX_RETROACTIVE_MS)}
-                onChange={handleTimeChange}
-              />
-            </View>
-          )}
-
-          {/* Icon grid */}
-          <View style={styles.grid}>
-            {DIAPER_OPTIONS.map(opt => (
-              <View key={opt.status} style={styles.cell}>
-                <TouchableOpacity
-                  style={[
-                    styles.circle,
-                    {
-                      backgroundColor: COLORS.diaper,
-                      opacity: opt.dimmed ? 0.45 : 1,
-                    },
-                  ]}
-                  onPress={() => handleSelect(opt.status)}
-                  disabled={saving}
-                >
-                  <Ionicons name={opt.icon} size={42} color={COLORS.surface} />
-                </TouchableOpacity>
-                <Text style={styles.circleLabel}>{opt.label}</Text>
+            {showPicker && (
+              <View style={styles.pickerWrapper}>
+                <DateTimePicker
+                  value={new Date(startTimestamp)}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(Date.now() - MAX_RETROACTIVE_MS)}
+                  onChange={handleTimeChange}
+                />
               </View>
-            ))}
-          </View>
-        </View>
+            )}
+
+            {/* Notes */}
+            <TextInput
+              style={styles.notesInput}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Notes (optional)"
+              placeholderTextColor={COLORS.textMuted}
+              returnKeyType="done"
+              editable={!saving}
+            />
+
+            {/* Icon grid — tap to auto-save */}
+            <View style={styles.grid}>
+              {DIAPER_OPTIONS.map(opt => (
+                <View key={opt.status} style={styles.cell}>
+                  <TouchableOpacity
+                    style={[
+                      styles.circle,
+                      { backgroundColor: COLORS.diaper, opacity: opt.dimmed ? 0.45 : 1 },
+                    ]}
+                    onPress={() => handleSelect(opt.status)}
+                    disabled={saving}
+                  >
+                    <Ionicons name={opt.icon} size={42} color={COLORS.surface} />
+                  </TouchableOpacity>
+                  <Text style={styles.circleLabel}>{opt.label}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );

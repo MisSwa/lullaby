@@ -192,6 +192,60 @@ export async function fetchLogsForBaby(
   }
 }
 
+// Returns distinct non-empty food names from all solids logs for a baby, most recent first.
+// Handles both new JSON format {"items":[{"food":"...","amount":"..."}],"notes":"..."}
+// and old plain-text format (first line = food name).
+export async function fetchSolidsHistory(
+  db: SQLite.SQLiteDatabase,
+  babyId: string,
+): Promise<string[]> {
+  try {
+    const rows = await db.getAllAsync<{ notes: string }>(
+      `SELECT notes FROM baby_logs
+       WHERE baby_id = ? AND type = 'feed' AND feedType = 'solids' AND notes != ''
+       ORDER BY timestamp DESC;`,
+      [babyId],
+    );
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const row of rows) {
+      let foodNames: string[] = [];
+      try {
+        const parsed = JSON.parse(row.notes) as unknown;
+        if (
+          parsed !== null &&
+          typeof parsed === 'object' &&
+          'items' in parsed &&
+          Array.isArray((parsed as Record<string, unknown>).items)
+        ) {
+          const items = (parsed as { items: unknown[] }).items;
+          foodNames = items
+            .filter(
+              (i): i is { food: string } =>
+                i !== null && typeof i === 'object' && typeof (i as Record<string, unknown>).food === 'string',
+            )
+            .map(i => i.food.trim())
+            .filter(Boolean);
+        }
+      } catch {
+        // Old plain-text format: first line is the food name
+        const firstLine = row.notes.split('\n')[0].trim();
+        if (firstLine) foodNames = [firstLine];
+      }
+      for (const name of foodNames) {
+        if (!seen.has(name.toLowerCase())) {
+          seen.add(name.toLowerCase());
+          result.push(name);
+        }
+      }
+    }
+    return result.slice(0, 20);
+  } catch (error) {
+    console.error('Failed to fetch solids history:', error);
+    return [];
+  }
+}
+
 export async function deleteLog(db: SQLite.SQLiteDatabase, id: string): Promise<void> {
   try {
     await db.runAsync('DELETE FROM baby_logs WHERE id = ?;', [id]);

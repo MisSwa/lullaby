@@ -18,6 +18,7 @@ const NOTIFICATION_KEYS: Record<NotificationType, string> = {
 const THEME_KEY = 'app_theme';
 const UNITS_KEY = 'app_units';
 const TIME_FORMAT_KEY = 'app_time_format';
+const SOLIDS_FAVORITES_KEY = 'solids_favorites';
 const NUDGE_KEYS: Record<keyof HasSeenNudge, string> = {
   sleep: 'nudge_seen_sleep',
   feed: 'nudge_seen_feed',
@@ -87,6 +88,8 @@ interface SettingsContextType {
   updateTimeFormat: (f: AppTimeFormat) => Promise<void>;
   hasSeenNudge: HasSeenNudge;
   markNudgeSeen: (type: keyof HasSeenNudge) => Promise<void>;
+  solidsFavorites: string[];
+  toggleSolidsFavorite: (food: string) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -98,6 +101,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [units, setUnits] = useState<AppUnits>('ml');
   const [timeFormat, setTimeFormat] = useState<AppTimeFormat>('12h');
   const [hasSeenNudge, setHasSeenNudge] = useState<HasSeenNudge>(DEFAULT_NUDGE);
+  const [solidsFavorites, setSolidsFavorites] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -126,6 +130,18 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           loadedNudge[type] = raw === '1';
         }
         setHasSeenNudge(loadedNudge);
+
+        const rawFavs = await getSetting(db, SOLIDS_FAVORITES_KEY);
+        if (rawFavs) {
+          try {
+            const parsed: unknown = JSON.parse(rawFavs);
+            if (Array.isArray(parsed) && parsed.every(x => typeof x === 'string')) {
+              setSolidsFavorites(parsed as string[]);
+            }
+          } catch {
+            // malformed JSON — keep empty default
+          }
+        }
       } catch (error) {
         console.error('Failed to load settings:', error);
       }
@@ -196,8 +212,27 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [db],
   );
 
+  const toggleSolidsFavorite = useCallback(
+    async (food: string): Promise<void> => {
+      const trimmed = food.trim();
+      if (!trimmed) return;
+      setSolidsFavorites(prev => {
+        const lc = trimmed.toLowerCase();
+        const exists = prev.some(f => f.toLowerCase() === lc);
+        const updated = exists
+          ? prev.filter(f => f.toLowerCase() !== lc)
+          : [...prev, trimmed];
+        setSetting(db, SOLIDS_FAVORITES_KEY, JSON.stringify(updated)).catch(err =>
+          console.error('Failed to persist solids favorites:', err),
+        );
+        return updated;
+      });
+    },
+    [db],
+  );
+
   return (
-    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme, units, updateUnits, timeFormat, updateTimeFormat, hasSeenNudge, markNudgeSeen }}>
+    <SettingsContext.Provider value={{ notifications, updateNotificationPref, theme, updateTheme, units, updateUnits, timeFormat, updateTimeFormat, hasSeenNudge, markNudgeSeen, solidsFavorites, toggleSolidsFavorite }}>
       {children}
     </SettingsContext.Provider>
   );

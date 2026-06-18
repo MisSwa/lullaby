@@ -20,7 +20,7 @@ This document is the single source of truth for all architectural, design, and e
 
 These rules may never be broken without a full constitution revision.
 
-1. **No Huckleberry purple.** The exact color `#7C5CBF` is permanently banned. The current palette uses Electric Indigo + vivid category colors. See Section 7.
+1. **No Huckleberry purple.** The exact color `#7C5CBF` is permanently banned. The palette uses Deep Violet `#7C3AED` as the primary (a fully saturated blue-leaning violet, not the pastel pinker `#7C5CBF`). See Section 7.
 2. **No cloud accounts or login.** There is no user authentication. No sign-up. No email. Data stays on-device.
 3. **Single-screen dashboard only.** There is no React Navigation, no bottom tabs, no stack navigator. The entire app lives on one screen. Modals handle input flows.
 4. **Pure React Context + Native Hooks.** No Redux, Zustand, Jotai, MobX, Recoil, or any other state management library.
@@ -188,26 +188,26 @@ This is a paid app. Timer data must never drift or be lost.
 
 ### 7.1 Color Palette
 
-The palette is deliberately high-energy and saturated — energetic, not muted.
+A jewel-tone system: saturated, premium, maximally distinct category colors. Designed for millennial parents (25–38); all values pass WCAG AA with white text on card header bands.
 
 ```ts
 // src/theme/colors.ts — canonical source (LIGHT palette)
-primary: '#6366F1'        // Electric Indigo (primary actions, buttons)
-primaryLight: '#E0E7FF'   // Light indigo tint
-background: '#F8FAFC'     // Crisp off-white
+primary: '#7C3AED'        // Deep Violet — premium CTA; 5.3:1 vs white. NOT Huckleberry's #7C5CBF.
+primaryLight: '#EDE9FE'   // Violet-100 tint
+background: '#FAFAF8'     // Warm off-white (cream undertone)
 surface: '#FFFFFF'         // Pure white card backgrounds
-surfaceAlt: '#EEF2FF'     // Indigo-tinted header background
-textPrimary: '#111827'    // Near-black
-textMuted: '#6B7280'      // Neutral gray
-border: '#E5E7EB'         // Subtle divider
+surfaceAlt: '#F5F3FF'     // Violet-50 — premium header tint
+textPrimary: '#18181B'    // Zinc-900 warm near-black
+textMuted: '#71717A'      // Zinc-500
+border: '#E4E4E7'         // Zinc-200
 
-sleep: '#8B5CF6'          // Vivid Violet (note: NOT Huckleberry's banned #7C5CBF)
-feed: '#F97316'           // Vivid Orange
-diaper: '#0EA5E9'         // Sky Blue
-active: '#22C55E'         // Bright Green (running timer state)
+sleep: '#1D4ED8'          // Bold Blue — night, calm, trust; 6.0:1 vs white
+feed: '#C2410C'           // Deep Burnt Orange — warm, nourishing; 4.8:1 vs white
+diaper: '#0F766E'         // Rich Teal — earthy, fresh, clean; 4.9:1 vs white
+active: '#16A34A'         // Forest Green — running timer state only
 
-error: '#EF4444'
-success: '#22C55E'
+error: '#DC2626'
+success: '#16A34A'
 shadow: '#000000'
 ```
 
@@ -229,7 +229,7 @@ System font only. No custom font loading. Use the `TYPOGRAPHY.size` scale from `
 - No border on cards — separation provided by shadow (`shadowOpacity: 0.09, shadowRadius: 10, elevation: 4`).
 - The `timeSince` value is the primary metric: 22px bold on full-width cards, 16px on half-width.
 - Dashboard card zone uses `COLORS.background` (not `surface`) so cards float above the page.
-- Header uses `COLORS.surfaceAlt` for a warm sage tint.
+- Header uses `COLORS.surfaceAlt` for a light violet-tinted background.
 
 ---
 
